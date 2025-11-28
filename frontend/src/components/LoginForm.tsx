@@ -151,7 +151,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                         <strong>Юрист:</strong> lawyer / lawyer123
                     </p>
                     <p style={{ margin: '5px 0' }}>
-                        <strong>Комплаенс:</strong> compliance / compliance123
+                        <strong>Маркетолог:</strong> marketing / marketing123
                     </p>
                 </div>
             </div>

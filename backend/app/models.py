@@ -7,10 +7,8 @@ import enum
 class UserRole(str, enum.Enum):
     ADMIN = "admin"  # Полный доступ
     OPERATOR = "operator"  # Обработка писем, создание черновиков
-    LAWYER = "lawyer"  # Только согласование юридических вопросов
-    ACCOUNTANT = "accountant"  # Согласование финансовых вопросов
-    MANAGER = "manager"  # Просмотр и общее согласование
-    COMPLIANCE = "compliance"  # Комплаенс - согласование на соответствие регуляторным требованиям
+    LAWYER = "lawyer"  # Согласование юридических вопросов (Юридический отдел)
+    MARKETING = "marketing"  # Согласование маркетинговых вопросов (Отдел маркетинга)
 
 
 class LetterType(str, enum.Enum):

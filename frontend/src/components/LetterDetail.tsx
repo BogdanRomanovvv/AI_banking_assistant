@@ -47,17 +47,13 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
     const canEdit = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.OPERATOR;
     const canApprove = currentUser.role === UserRole.ADMIN ||
         currentUser.role === UserRole.LAWYER ||
-        currentUser.role === UserRole.ACCOUNTANT ||
-        currentUser.role === UserRole.MANAGER ||
-        currentUser.role === UserRole.COMPLIANCE;
+        currentUser.role === UserRole.MARKETING;
 
     // Определяем отдел пользователя
     const getUserDepartment = (): string | null => {
         const departmentMap: Record<UserRole, string> = {
             [UserRole.LAWYER]: 'Юридический отдел',
-            [UserRole.ACCOUNTANT]: 'Бухгалтерия',
-            [UserRole.MANAGER]: 'Менеджмент',
-            [UserRole.COMPLIANCE]: 'Комплаенс',
+            [UserRole.MARKETING]: 'Отдел маркетинга',
             [UserRole.ADMIN]: '',
             [UserRole.OPERATOR]: ''
         };

@@ -39,19 +39,19 @@ test_users = [
         "role": "LAWYER"
     },
     {
-        "username": "compliance",
-        "email": "compliance@bank.com",
-        "password": "compliance123",
+        "username": "marketing",
+        "email": "marketing@bank.com",
+        "password": "marketing123",
         "first_name": "Отдел",
-        "last_name": "Комплаенса",
-        "role": "COMPLIANCE"
+        "last_name": "Маркетинга",
+        "role": "MARKETING"
     }
 ]
 
 def create_users():
     with engine.connect() as conn:
         # Удаляем существующих пользователей
-        conn.execute(text("DELETE FROM users WHERE username IN ('admin', 'operator', 'lawyer', 'compliance')"))
+        conn.execute(text("DELETE FROM users WHERE username IN ('admin', 'operator', 'lawyer', 'marketing')"))
         conn.commit()
         
         # Создаем новых пользователей

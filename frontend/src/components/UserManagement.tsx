@@ -112,9 +112,7 @@ const UserManagement: React.FC = () => {
             [UserRole.ADMIN]: 'Администратор',
             [UserRole.OPERATOR]: 'Оператор',
             [UserRole.LAWYER]: 'Юрист',
-            [UserRole.ACCOUNTANT]: 'Бухгалтер',
-            [UserRole.MANAGER]: 'Менеджер',
-            [UserRole.COMPLIANCE]: 'Комплаенс'
+            [UserRole.MARKETING]: 'Маркетолог'
         };
         return roleNames[role] || role;
     };
@@ -209,9 +207,7 @@ const UserManagement: React.FC = () => {
                             >
                                 <option value={UserRole.OPERATOR}>Оператор</option>
                                 <option value={UserRole.LAWYER}>Юрист</option>
-                                <option value={UserRole.ACCOUNTANT}>Бухгалтер</option>
-                                <option value={UserRole.MANAGER}>Менеджер</option>
-                                <option value={UserRole.COMPLIANCE}>Комплаенс</option>
+                                <option value={UserRole.MARKETING}>Маркетолог</option>
                                 <option value={UserRole.ADMIN}>Администратор</option>
                             </select>
                         </div>

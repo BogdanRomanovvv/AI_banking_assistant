@@ -98,8 +98,7 @@ class RoleChecker:
 require_admin = RoleChecker([UserRole.ADMIN])
 require_operator = RoleChecker([UserRole.ADMIN, UserRole.OPERATOR])
 require_lawyer = RoleChecker([UserRole.ADMIN, UserRole.LAWYER])
-require_accountant = RoleChecker([UserRole.ADMIN, UserRole.ACCOUNTANT])
-require_manager = RoleChecker([UserRole.ADMIN, UserRole.MANAGER])
+require_marketing = RoleChecker([UserRole.ADMIN, UserRole.MARKETING])
 
-# Проверка для согласования (юристы, бухгалтеры, менеджеры, комплаенс)
-require_approver = RoleChecker([UserRole.ADMIN, UserRole.LAWYER, UserRole.ACCOUNTANT, UserRole.MANAGER, UserRole.COMPLIANCE])
+# Проверка для согласования (только юристы и маркетологи)
+require_approver = RoleChecker([UserRole.ADMIN, UserRole.LAWYER, UserRole.MARKETING])

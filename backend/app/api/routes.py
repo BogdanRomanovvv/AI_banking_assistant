@@ -204,15 +204,13 @@ def get_letters(
     """Получение списка писем"""
     from app.models import UserRole
     
-    # Для согласующих (юристы, бухгалтеры, менеджеры, комплаенс) - только письма на согласовании у них
-    if current_user.role in [UserRole.LAWYER, UserRole.ACCOUNTANT, UserRole.MANAGER, UserRole.COMPLIANCE]:
+    # Для согласующих (юристы и маркетологи) - только письма на согласовании у них
+    if current_user.role in [UserRole.LAWYER, UserRole.MARKETING]:
         letters = letter_service.get_letters(db, skip, limit, status)
         # Фильтруем только те письма, где текущий пользователь в маршруте согласования
         role_department_map = {
             UserRole.LAWYER: 'Юридический отдел',
-            UserRole.ACCOUNTANT: 'Бухгалтерия',
-            UserRole.MANAGER: 'Менеджмент',
-            UserRole.COMPLIANCE: 'Комплаенс'
+            UserRole.MARKETING: 'Отдел маркетинга'
         }
         department = role_department_map.get(current_user.role)
         
@@ -305,9 +303,7 @@ def add_approval_comment(
     if current_user.role != UserRole.ADMIN:
         role_department_map = {
             UserRole.LAWYER: 'Юридический отдел',
-            UserRole.ACCOUNTANT: 'Бухгалтерия',
-            UserRole.MANAGER: 'Менеджмент',
-            UserRole.COMPLIANCE: 'Комплаенс'
+            UserRole.MARKETING: 'Отдел маркетинга'
         }
         user_department = role_department_map.get(current_user.role)
         

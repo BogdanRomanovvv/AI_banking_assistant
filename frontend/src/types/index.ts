@@ -28,9 +28,7 @@ export enum UserRole {
     ADMIN = 'admin',
     OPERATOR = 'operator',
     LAWYER = 'lawyer',
-    ACCOUNTANT = 'accountant',
-    MANAGER = 'manager',
-    COMPLIANCE = 'compliance'
+    MARKETING = 'marketing'
 }
 
 // Auth types
