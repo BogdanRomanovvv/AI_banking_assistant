@@ -94,8 +94,10 @@ export const userService = {
 // Letter service
 export const letterService = {
     // Получить все письма
-    getLetters: async (status?: LetterStatus): Promise<Letter[]> => {
-        const params = status ? { status } : {};
+    getLetters: async (status?: LetterStatus, reserved?: boolean): Promise<Letter[]> => {
+        const params: any = {};
+        if (status !== undefined) params.status = status;
+        if (reserved !== undefined) params.reserved = reserved;
         const response = await api.get<Letter[]>('/letters/', { params });
         return response.data;
     },
@@ -127,6 +129,12 @@ export const letterService = {
     // Начать согласование
     startApproval: async (id: number): Promise<Letter> => {
         const response = await api.post<Letter>(`/letters/${id}/approval/start`);
+        return response.data;
+    },
+
+    // Зарезервировать письмо
+    reserveLetter: async (id: number): Promise<Letter> => {
+        const response = await api.post<Letter>(`/letters/${id}/reserve`);
         return response.data;
     },
 

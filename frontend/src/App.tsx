@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import './App.css';
-import { Letter, LetterStatus, User } from './types';
+import { Letter, LetterStatus, User, UserRole } from './types';
 import { letterService, authService } from './services/api';
 import { KanbanBoard } from './components/KanbanBoard';
+import { ApproverKanbanBoard } from './components/ApproverKanbanBoard';
 import { LetterDetail } from './components/LetterDetail';
 import UserManagement from './components/UserManagement';
 import LoginForm from './components/LoginForm';
@@ -241,11 +242,21 @@ function App() {
                 {loading && currentView === 'kanban' && <div className="loading">Загрузка...</div>}
 
                 {currentView === 'kanban' ? (
-                    <KanbanBoard
-                        letters={letters}
-                        onSelectLetter={handleSelectLetter}
-                        onStatusChange={handleStatusChange}
-                    />
+                    // Для юристов и маркетологов показываем специальную доску с 2 колонками
+                    currentUser && (currentUser.role === UserRole.LAWYER || currentUser.role === UserRole.MARKETING) ? (
+                        <ApproverKanbanBoard
+                            user={currentUser}
+                            onSelectLetter={handleSelectLetter}
+                            selectedLetterId={selectedLetter?.id}
+                        />
+                    ) : (
+                        // Для админов и операторов обычная Kanban доска
+                        <KanbanBoard
+                            letters={letters}
+                            onSelectLetter={handleSelectLetter}
+                            onStatusChange={handleStatusChange}
+                        />
+                    )
                 ) : (
                     <UserManagement />
                 )}

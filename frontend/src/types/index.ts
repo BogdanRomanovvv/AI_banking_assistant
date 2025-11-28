@@ -146,6 +146,8 @@ export interface Letter {
     approval_route?: ApprovalRoute[];
     current_approver?: string;
     approval_comments?: ApprovalComment[];
+    reserved_by_user_id?: number;  // Новое поле для резервирования
+    reserved_at?: string;  // Новое поле для резервирования
     created_at: string;
     updated_at?: string;
     deadline?: string;

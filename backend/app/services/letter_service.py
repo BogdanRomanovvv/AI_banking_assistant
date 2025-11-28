@@ -80,11 +80,43 @@ class LetterService:
         return db.query(Letter).filter(Letter.id == letter_id).first()
     
     @staticmethod
-    def get_letters(db: Session, skip: int = 0, limit: int = 100, status: Optional[LetterStatus] = None) -> List[Letter]:
+    def get_letters(
+        db: Session, 
+        skip: int = 0, 
+        limit: int = 100, 
+        status: Optional[LetterStatus] = None, 
+        department_filter: Optional[str] = None,
+        user_id: Optional[int] = None,
+        reserved_filter: Optional[bool] = None
+    ) -> List[Letter]:
         """Получение списка писем с фильтрацией"""
+        from sqlalchemy import or_, text
+        
         query = db.query(Letter)
+        
         if status:
             query = query.filter(Letter.status == status)
+        
+        # Фильтрация по отделу через SQL (для юристов/маркетологов)
+        if department_filter:
+            # Используем PostgreSQL функцию для поиска в JSON массиве
+            # Проверяем что хотя бы один элемент approval_route содержит нужный department
+            query = query.filter(
+                text(
+                    "EXISTS (SELECT 1 FROM jsonb_array_elements(CAST(approval_route AS jsonb)) AS elem "
+                    "WHERE LOWER(elem->>'department') LIKE LOWER(:dept_pattern))"
+                ).bindparams(dept_pattern=f'%{department_filter}%')
+            )
+            
+            # Фильтрация по резервированию
+            if reserved_filter is not None and user_id is not None:
+                if reserved_filter:
+                    # Показать только зарезервированные за текущим пользователем
+                    query = query.filter(Letter.reserved_by_user_id == user_id)
+                else:
+                    # Показать только НЕЗАРЕЗЕРВИРОВАННЫЕ (для колонки "Входящие")
+                    query = query.filter(Letter.reserved_by_user_id == None)
+        
         return query.order_by(Letter.created_at.desc()).offset(skip).limit(limit).all()
     
     @staticmethod
@@ -198,6 +230,29 @@ class LetterService:
                 body=letter.final_response,
                 reply_to=None
             )
+        db.refresh(letter)
+        return letter
+    
+    @staticmethod
+    def reserve_letter(db: Session, letter_id: int, user_id: int) -> Letter:
+        """Резервирование письма за согласующим (против race condition)"""
+        letter = db.query(Letter).filter(Letter.id == letter_id).first()
+        if not letter:
+            raise ValueError("Letter not found")
+        
+        # Проверяем, что письмо на согласовании
+        if letter.status != LetterStatus.IN_APPROVAL:
+            raise ValueError("Letter is not in approval status")
+        
+        # Проверяем, что письмо не зарезервировано другим пользователем
+        if letter.reserved_by_user_id and letter.reserved_by_user_id != user_id:
+            raise ValueError("Letter is already reserved by another user")
+        
+        # Резервируем письмо
+        letter.reserved_by_user_id = user_id
+        letter.reserved_at = datetime.now()
+        
+        db.commit()
         db.refresh(letter)
         return letter
 

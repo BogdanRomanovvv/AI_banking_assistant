@@ -90,6 +90,10 @@ class Letter(Base):
     current_approver = Column(String(100), nullable=True)  # Текущий согласующий отдел
     approval_comments = Column(JSON, nullable=True)  # Комментарии от согласующих
     
+    # Резервирование для согласующих (против race condition)
+    reserved_by_user_id = Column(Integer, nullable=True, index=True)  # ID пользователя, зарезервировавшего письмо
+    reserved_at = Column(DateTime(timezone=True), nullable=True)  # Время резервирования
+    
     # Временные метки
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

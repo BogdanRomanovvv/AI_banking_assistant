@@ -198,33 +198,35 @@ def get_letters(
     skip: int = 0, 
     limit: int = 100, 
     status: Optional[LetterStatus] = None,
+    reserved: Optional[bool] = None,  # Новый параметр для фильтрации зарезервированных
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """Получение списка писем"""
     from app.models import UserRole
+    import logging
+    logger = logging.getLogger(__name__)
     
     # Для согласующих (юристы и маркетологи) - только письма на согласовании у них
     if current_user.role in [UserRole.LAWYER, UserRole.MARKETING]:
-        letters = letter_service.get_letters(db, skip, limit, status)
-        # Фильтруем только те письма, где текущий пользователь в маршруте согласования
         role_department_map = {
             UserRole.LAWYER: 'Юридический отдел',
             UserRole.MARKETING: 'Отдел маркетинга'
         }
         department = role_department_map.get(current_user.role)
         
-        filtered_letters = []
-        for letter in letters:
-            if letter.approval_route and department:
-                # Проверяем, есть ли отдел пользователя в маршруте согласования (игнорируем регистр)
-                department_lower = department.lower()
-                for route_item in letter.approval_route:
-                    route_dept = route_item.get('department', '')
-                    if route_dept.lower() == department_lower:
-                        filtered_letters.append(letter)
-                        break
-        return filtered_letters
+        logger.info(f"Approver request: role={current_user.role}, dept={department}, status={status}, reserved={reserved}, user_id={current_user.id}")
+        
+        # Фильтрация на уровне SQL с учетом резервирования
+        result = letter_service.get_letters(
+            db, skip, limit, status, 
+            department_filter=department,
+            user_id=current_user.id,
+            reserved_filter=reserved
+        )
+        
+        logger.info(f"Approver result: {len(result)} letters found")
+        return result
     
     # Для операторов и админов - все письма
     return letter_service.get_letters(db, skip, limit, status)
@@ -279,6 +281,19 @@ def start_approval(
     """Начать процесс согласования (операторы и админы)"""
     try:
         return letter_service.start_approval(db, letter_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/{letter_id}/reserve", response_model=LetterResponse)
+def reserve_letter(
+    letter_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_approver)
+):
+    """Резервирование письма за согласующим (юристы, маркетологи)"""
+    try:
+        return letter_service.reserve_letter(db, letter_id, current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
