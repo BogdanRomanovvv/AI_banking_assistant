@@ -150,8 +150,10 @@ class LetterService:
         
         # Если одобрено - переход к следующему согласующему или завершение
         if letter.approval_route:
+            # Сравниваем названия отделов без учета регистра
+            department_lower = department.lower()
             current_index = next((i for i, route in enumerate(letter.approval_route) 
-                                if route.get("department") == department), None)
+                                if route.get("department", "").lower() == department_lower), None)
             
             if current_index is not None and current_index + 1 < len(letter.approval_route):
                 # Переход к следующему

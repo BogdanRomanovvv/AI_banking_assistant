@@ -1,22 +1,59 @@
 import { useState, useEffect } from 'react';
 import './App.css';
-import { Letter, LetterStatus } from './types';
-import { letterService } from './services/api';
+import { Letter, LetterStatus, User } from './types';
+import { letterService, authService } from './services/api';
 import { KanbanBoard } from './components/KanbanBoard';
 import { LetterDetail } from './components/LetterDetail';
+import UserManagement from './components/UserManagement';
+import LoginForm from './components/LoginForm';
 
 function App() {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [currentView, setCurrentView] = useState<'kanban' | 'users'>('kanban');
     const [letters, setLetters] = useState<Letter[]>([]);
     const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
     const [showDetail, setShowDetail] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Проверка аутентификации при загрузке
     useEffect(() => {
-        loadLetters();
-        const interval = setInterval(loadLetters, 30000);
-        return () => clearInterval(interval);
+        checkAuth();
     }, []);
+
+    const checkAuth = async () => {
+        if (authService.isAuthenticated()) {
+            try {
+                const user = await authService.getCurrentUser();
+                setCurrentUser(user);
+                setIsAuthenticated(true);
+            } catch (err) {
+                authService.logout();
+                setIsAuthenticated(false);
+            }
+        }
+    };
+
+    const handleLoginSuccess = (user: User) => {
+        setCurrentUser(user);
+        setIsAuthenticated(true);
+    };
+
+    const handleLogout = () => {
+        authService.logout();
+        setCurrentUser(null);
+        setIsAuthenticated(false);
+    };
+
+    useEffect(() => {
+        if (isAuthenticated && currentView === 'kanban') {
+            loadLetters();
+            // Обновление каждые 30 секунд
+            const interval = setInterval(loadLetters, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [currentView, isAuthenticated]);
 
     const loadLetters = async () => {
         try {
@@ -24,6 +61,14 @@ function App() {
             setError(null);
             const data = await letterService.getLetters();
             setLetters(data);
+
+            // Если открыто модальное окно, обновляем и выбранное письмо
+            if (selectedLetter) {
+                const updatedSelectedLetter = data.find(l => l.id === selectedLetter.id);
+                if (updatedSelectedLetter) {
+                    setSelectedLetter(updatedSelectedLetter);
+                }
+            }
         } catch (err) {
             setError('Ошибка загрузки писем');
             console.error(err);
@@ -117,32 +162,102 @@ function App() {
         setSelectedLetter(null);
     };
 
+    const getRoleName = (role: string) => {
+        const roleNames: Record<string, string> = {
+            'admin': 'Администратор',
+            'operator': 'Оператор',
+            'lawyer': 'Юрист',
+            'accountant': 'Бухгалтер',
+            'manager': 'Менеджер'
+        };
+        return roleNames[role] || role;
+    };
+
+    // Если не аутентифицирован - показываем форму входа
+    if (!isAuthenticated) {
+        return <LoginForm onLoginSuccess={handleLoginSuccess} />;
+    }
+
     return (
         <div className="app">
             <header className="header">
                 <div className="header-content">
                     <h1>Banking AI Assistant</h1>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        <span style={{ marginRight: '20px', color: '#fff' }}>
+                            {currentUser?.first_name} {currentUser?.last_name} ({getRoleName(currentUser?.role || '')})
+                        </span>
+                        <button
+                            onClick={() => setCurrentView('kanban')}
+                            style={{
+                                padding: '8px 16px',
+                                backgroundColor: currentView === 'kanban' ? '#1976d2' : '#fff',
+                                color: currentView === 'kanban' ? '#fff' : '#333',
+                                border: '1px solid #1976d2',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontWeight: currentView === 'kanban' ? 'bold' : 'normal'
+                            }}
+                        >
+                            Письма
+                        </button>
+                        {currentUser?.role === 'admin' && (
+                            <button
+                                onClick={() => setCurrentView('users')}
+                                style={{
+                                    padding: '8px 16px',
+                                    backgroundColor: currentView === 'users' ? '#1976d2' : '#fff',
+                                    color: currentView === 'users' ? '#fff' : '#333',
+                                    border: '1px solid #1976d2',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontWeight: currentView === 'users' ? 'bold' : 'normal'
+                                }}
+                            >
+                                Пользователи
+                            </button>
+                        )}
+                        <button
+                            onClick={handleLogout}
+                            style={{
+                                padding: '8px 16px',
+                                backgroundColor: '#d32f2f',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold'
+                            }}
+                        >
+                            Выйти
+                        </button>
+                    </div>
                 </div>
             </header>
 
             <div className="container">
                 {error && <div className="error">{error}</div>}
 
-                {loading && <div className="loading">Загрузка...</div>}
+                {loading && currentView === 'kanban' && <div className="loading">Загрузка...</div>}
 
-                <KanbanBoard
-                    letters={letters}
-                    onSelectLetter={handleSelectLetter}
-                    onStatusChange={handleStatusChange}
-                />
+                {currentView === 'kanban' ? (
+                    <KanbanBoard
+                        letters={letters}
+                        onSelectLetter={handleSelectLetter}
+                        onStatusChange={handleStatusChange}
+                    />
+                ) : (
+                    <UserManagement />
+                )}
             </div>
 
-            {showDetail && selectedLetter && (
+            {showDetail && selectedLetter && currentView === 'kanban' && (
                 <div className="modal-overlay" onClick={handleCloseModal}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <button className="modal-close" onClick={handleCloseModal}>×</button>
                         <LetterDetail
                             letter={selectedLetter}
+                            currentUser={currentUser!}
                             onAnalyze={handleAnalyzeLetter}
                             onUpdateResponse={handleUpdateResponse}
                             onStartApproval={handleStartApproval}
@@ -151,8 +266,6 @@ function App() {
                     </div>
                 </div>
             )}
-
-            {/* UI создания новых писем отключен */}
         </div>
     );
 }

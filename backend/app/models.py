@@ -1,7 +1,16 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, Enum as SQLEnum, Boolean
 from sqlalchemy.sql import func
 from app.database import Base
 import enum
+
+
+class UserRole(str, enum.Enum):
+    ADMIN = "admin"  # Полный доступ
+    OPERATOR = "operator"  # Обработка писем, создание черновиков
+    LAWYER = "lawyer"  # Только согласование юридических вопросов
+    ACCOUNTANT = "accountant"  # Согласование финансовых вопросов
+    MANAGER = "manager"  # Просмотр и общее согласование
+    COMPLIANCE = "compliance"  # Комплаенс - согласование на соответствие регуляторным требованиям
 
 
 class LetterType(str, enum.Enum):
@@ -28,6 +37,25 @@ class FormalityLevel(str, enum.Enum):
     CORPORATE = "corporate"
     NEUTRAL = "neutral"
     CLIENT_ORIENTED = "client_oriented"
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(100), unique=True, nullable=False, index=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=False)
+    
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    middle_name = Column(String(100), nullable=True)
+    
+    role = Column(SQLEnum(UserRole), default=UserRole.OPERATOR, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
 
 class Letter(Base):

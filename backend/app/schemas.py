@@ -1,9 +1,71 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from app.models import LetterType, LetterStatus, FormalityLevel
+from app.models import LetterType, LetterStatus, FormalityLevel, UserRole
 
 
+# Auth schemas
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+
+class UserRegister(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+    first_name: str
+    last_name: str
+    middle_name: Optional[str] = None
+    role: UserRole = UserRole.OPERATOR
+
+
+# User schemas
+class UserCreate(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+    first_name: str
+    last_name: str
+    middle_name: Optional[str] = None
+    role: UserRole = UserRole.OPERATOR
+
+
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    first_name: str
+    last_name: str
+    middle_name: Optional[str]
+    role: UserRole
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+
+# Letter schemas
 class LetterCreate(BaseModel):
     subject: str
     body: str

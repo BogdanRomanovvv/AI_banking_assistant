@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Letter, LetterStatus } from '../types';
+import { Letter, LetterStatus, User, UserRole } from '../types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 interface LetterDetailProps {
     letter: Letter;
+    currentUser: User;
     onAnalyze: (id: number) => void;
     onUpdateResponse: (id: number, response: string) => void;
     onStartApproval: (id: number) => void;
@@ -30,6 +31,7 @@ const responseTypeLabels: Record<string, string> = {
 
 export const LetterDetail: React.FC<LetterDetailProps> = ({
     letter,
+    currentUser,
     onAnalyze,
     onUpdateResponse,
     onStartApproval,
@@ -39,6 +41,30 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
     const [editedResponse, setEditedResponse] = useState(letter.selected_response || '');
     const [approvalComment, setApprovalComment] = useState('');
     const [activeTab, setActiveTab] = useState<string>('strict_official');
+
+    // Проверка прав доступа
+    const canAnalyze = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.OPERATOR;
+    const canEdit = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.OPERATOR;
+    const canApprove = currentUser.role === UserRole.ADMIN ||
+        currentUser.role === UserRole.LAWYER ||
+        currentUser.role === UserRole.ACCOUNTANT ||
+        currentUser.role === UserRole.MANAGER ||
+        currentUser.role === UserRole.COMPLIANCE;
+
+    // Определяем отдел пользователя
+    const getUserDepartment = (): string | null => {
+        const departmentMap: Record<UserRole, string> = {
+            [UserRole.LAWYER]: 'Юридический отдел',
+            [UserRole.ACCOUNTANT]: 'Бухгалтерия',
+            [UserRole.MANAGER]: 'Менеджмент',
+            [UserRole.COMPLIANCE]: 'Комплаенс',
+            [UserRole.ADMIN]: '',
+            [UserRole.OPERATOR]: ''
+        };
+        const dept = departmentMap[currentUser.role] || null;
+        // Возвращаем null для пустых строк
+        return dept && dept.trim() !== '' ? dept : null;
+    };
 
     const handleSaveResponse = () => {
         onUpdateResponse(letter.id, editedResponse);
@@ -60,7 +86,7 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
 
     return (
         <div>
-            {(letter.status === LetterStatus.NEW || letter.status === LetterStatus.ANALYZING) && (
+            {canAnalyze && (letter.status === LetterStatus.NEW || letter.status === LetterStatus.ANALYZING) && (
                 <div className="mb-16">
                     <button className="btn btn-primary" onClick={() => onAnalyze(letter.id)}>
                         Анализировать письмо
@@ -225,7 +251,7 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
                     <div className="response-content">
                         {letter.draft_responses[activeTab as keyof typeof letter.draft_responses]}
                     </div>
-                    {!letter.selected_response && (
+                    {canEdit && !letter.selected_response && (
                         <div className="mt-16">
                             <button
                                 className="btn btn-primary"
@@ -272,13 +298,15 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
                             }}>
                                 {letter.selected_response}
                             </div>
-                            <button className="btn btn-primary" onClick={() => {
-                                setEditedResponse(letter.selected_response || '');
-                                setEditingResponse(true);
-                            }}>
-                                Редактировать
-                            </button>
-                            {letter.status === LetterStatus.DRAFT_READY && (
+                            {canEdit && (
+                                <button className="btn btn-primary" onClick={() => {
+                                    setEditedResponse(letter.selected_response || '');
+                                    setEditingResponse(true);
+                                }}>
+                                    Редактировать
+                                </button>
+                            )}
+                            {canEdit && letter.status === LetterStatus.DRAFT_READY && (
                                 <button
                                     className="btn btn-success"
                                     style={{ marginLeft: '10px' }}
@@ -296,9 +324,10 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
                 <div className="detail-section">
                     <h3 className="detail-section-title">Маршрут согласования</h3>
                     {letter.approval_route.map((route, idx) => {
-                        const isActive = route.department === letter.current_approver;
+                        const isActive = letter.current_approver &&
+                            route.department.toLowerCase() === letter.current_approver.toLowerCase();
                         const isCompleted = letter.approval_comments?.some(
-                            c => c.department === route.department && c.approved
+                            c => c.department.toLowerCase() === route.department.toLowerCase() && c.approved
                         );
 
                         return (
@@ -329,33 +358,55 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
                 </div>
             )}
 
-            {letter.status === LetterStatus.IN_APPROVAL && letter.current_approver && (
+            {canApprove && letter.status === LetterStatus.IN_APPROVAL && letter.current_approver && (
                 <div className="detail-section">
                     <h3 className="detail-section-title">Действия согласующего: {letter.current_approver}</h3>
-                    <div className="form-group">
-                        <label className="form-label">Комментарий</label>
-                        <textarea
-                            className="form-textarea"
-                            value={approvalComment}
-                            onChange={(e) => setApprovalComment(e.target.value)}
-                            rows={4}
-                            placeholder="Введите комментарий..."
-                        />
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button
-                            className="btn btn-success"
-                            onClick={() => handleApproval(true)}
-                        >
-                            Согласовать
-                        </button>
-                        <button
-                            className="btn btn-danger"
-                            onClick={() => handleApproval(false)}
-                        >
-                            Отклонить
-                        </button>
-                    </div>
+                    {(() => {
+                        const userDept = getUserDepartment();
+                        const currentApprover = letter.current_approver;
+                        const isUserTurn = userDept && currentApprover &&
+                            userDept.toLowerCase() === currentApprover.toLowerCase();
+
+                        console.log('Approval check:', {
+                            userDept,
+                            currentApprover,
+                            isUserTurn,
+                            userRole: currentUser.role
+                        });
+
+                        return isUserTurn ? (
+                            <>
+                                <div className="form-group">
+                                    <label className="form-label">Комментарий</label>
+                                    <textarea
+                                        className="form-textarea"
+                                        value={approvalComment}
+                                        onChange={(e) => setApprovalComment(e.target.value)}
+                                        rows={4}
+                                        placeholder="Введите комментарий..."
+                                    />
+                                </div>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button
+                                        className="btn btn-success"
+                                        onClick={() => handleApproval(true)}
+                                    >
+                                        Согласовать
+                                    </button>
+                                    <button
+                                        className="btn btn-danger"
+                                        onClick={() => handleApproval(false)}
+                                    >
+                                        Отклонить
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <div style={{ padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                                Ожидается согласование от отдела: {letter.current_approver}
+                            </div>
+                        );
+                    })()}
                 </div>
             )}
 

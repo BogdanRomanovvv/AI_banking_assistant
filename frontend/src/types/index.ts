@@ -24,6 +24,70 @@ export enum FormalityLevel {
     CLIENT_ORIENTED = 'client_oriented'
 }
 
+export enum UserRole {
+    ADMIN = 'admin',
+    OPERATOR = 'operator',
+    LAWYER = 'lawyer',
+    ACCOUNTANT = 'accountant',
+    MANAGER = 'manager',
+    COMPLIANCE = 'compliance'
+}
+
+// Auth types
+export interface Token {
+    access_token: string;
+    token_type: string;
+}
+
+export interface LoginCredentials {
+    username: string;
+    password: string;
+}
+
+export interface RegisterData {
+    username: string;
+    email: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    middle_name?: string;
+    role: UserRole;
+}
+
+// User types
+export interface User {
+    id: number;
+    username: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    middle_name?: string;
+    role: UserRole;
+    is_active: boolean;
+    created_at: string;
+    updated_at?: string;
+}
+
+export interface UserCreate {
+    username: string;
+    email: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    middle_name?: string;
+    role: UserRole;
+}
+
+export interface UserUpdate {
+    first_name?: string;
+    last_name?: string;
+    middle_name?: string;
+    email?: string;
+    role?: UserRole;
+    is_active?: boolean;
+}
+
+// Letter types
 export interface Classification {
     type: string;
     description: string;
