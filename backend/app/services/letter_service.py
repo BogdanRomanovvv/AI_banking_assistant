@@ -112,6 +112,29 @@ class LetterService:
         if not letter.selected_response:
             raise ValueError("No response selected for approval")
         
+        # Проверяем, нужно ли согласование
+        if not letter.approval_route or len(letter.approval_route) == 0:
+            # Согласование не требуется - сразу статус APPROVED и отправка
+            letter.status = LetterStatus.APPROVED
+            letter.current_approver = None
+            letter.final_response = letter.selected_response
+            
+            db.commit()
+            
+            # Отправляем ответ отправителю
+            if letter.sender_email and letter.final_response:
+                subject = f"Re: {letter.subject}"
+                send_email(
+                    to_email=letter.sender_email,
+                    subject=subject,
+                    body=letter.final_response,
+                    reply_to=None
+                )
+            
+            db.refresh(letter)
+            return letter
+        
+        # Если есть маршрут согласования - стандартный процесс
         letter.status = LetterStatus.IN_APPROVAL
         
         # Устанавливаем первого согласующего из маршрута
