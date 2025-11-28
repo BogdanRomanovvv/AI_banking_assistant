@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
 import './App.css';
-import { Letter, LetterCreate, LetterStatus } from './types';
+import { Letter, LetterStatus } from './types';
 import { letterService } from './services/api';
 import { KanbanBoard } from './components/KanbanBoard';
 import { LetterDetail } from './components/LetterDetail';
-import { NewLetterForm } from './components/NewLetterForm';
 
 function App() {
     const [letters, setLetters] = useState<Letter[]>([]);
     const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
-    const [showNewForm, setShowNewForm] = useState(false);
     const [showDetail, setShowDetail] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -34,22 +32,7 @@ function App() {
         }
     };
 
-    const handleCreateLetter = async (letterData: LetterCreate) => {
-        try {
-            setLoading(true);
-            setError(null);
-            const newLetter = await letterService.createLetter(letterData);
-            setLetters([newLetter, ...letters]);
-            setShowNewForm(false);
-            setSelectedLetter(newLetter);
-            setShowDetail(true);
-        } catch (err) {
-            setError('Ошибка создания письма');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Создание новых писем из UI отключено
 
     const handleAnalyzeLetter = async (id: number) => {
         try {
@@ -114,7 +97,6 @@ function App() {
     const handleSelectLetter = (letter: Letter) => {
         setSelectedLetter(letter);
         setShowDetail(true);
-        setShowNewForm(false);
     };
 
     const handleStatusChange = async (letterId: number, newStatus: LetterStatus) => {
@@ -139,16 +121,7 @@ function App() {
         <div className="app">
             <header className="header">
                 <div className="header-content">
-                    <h1>🏦 Banking AI Assistant</h1>
-                    <button
-                        className="btn btn-primary"
-                        onClick={() => {
-                            setShowNewForm(true);
-                            setShowDetail(false);
-                        }}
-                    >
-                        + Новое письмо
-                    </button>
+                    <h1>Banking AI Assistant</h1>
                 </div>
             </header>
 
@@ -179,17 +152,7 @@ function App() {
                 </div>
             )}
 
-            {showNewForm && (
-                <div className="modal-overlay" onClick={() => setShowNewForm(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="modal-close" onClick={() => setShowNewForm(false)}>×</button>
-                        <NewLetterForm
-                            onSubmit={handleCreateLetter}
-                            onCancel={() => setShowNewForm(false)}
-                        />
-                    </div>
-                </div>
-            )}
+            {/* UI создания новых писем отключен */}
         </div>
     );
 }

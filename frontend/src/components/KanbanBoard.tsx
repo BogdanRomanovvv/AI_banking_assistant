@@ -8,11 +8,11 @@ interface KanbanBoardProps {
 }
 
 const statusColumns = [
-    { status: LetterStatus.NEW, title: 'Входящие', icon: '📥' },
-    { status: LetterStatus.ANALYZING, title: 'В обработке', icon: '⚙️' },
-    { status: LetterStatus.DRAFT_READY, title: 'Черновик готов', icon: '📝' },
-    { status: LetterStatus.IN_APPROVAL, title: 'На согласовании', icon: '👥' },
-    { status: LetterStatus.APPROVED, title: 'Согласовано', icon: '✅' },
+    { status: LetterStatus.NEW, title: 'Входящие' },
+    { status: LetterStatus.ANALYZING, title: 'В обработке' },
+    { status: LetterStatus.DRAFT_READY, title: 'Черновик готов' },
+    { status: LetterStatus.IN_APPROVAL, title: 'На согласовании' },
+    { status: LetterStatus.APPROVED, title: 'Согласовано' },
 ];
 
 const typeLabels: Record<string, string> = {
@@ -81,7 +81,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         >
                             <div className="column-header">
                                 <div className="column-title">
-                                    <span>{column.icon}</span>
                                     <span>{column.title}</span>
                                 </div>
                                 <span className="column-count">{columnLetters.length}</span>
@@ -90,7 +89,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             <div className="column-content">
                                 {columnLetters.length === 0 ? (
                                     <div className="empty-state">
-                                        <div className="empty-state-icon">{column.icon}</div>
                                         <div className="empty-state-text">Нет писем</div>
                                     </div>
                                 ) : (
@@ -119,7 +117,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                                 )}
                                                 {letter.sla_hours && (
                                                     <span className="badge badge-sla">
-                                                        ⏱️ {letter.sla_hours}ч
+                                                        SLA {letter.sla_hours}ч
                                                     </span>
                                                 )}
                                             </div>

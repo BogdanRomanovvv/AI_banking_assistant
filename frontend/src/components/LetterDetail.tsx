@@ -60,10 +60,10 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
 
     return (
         <div>
-            {letter.status === LetterStatus.NEW && (
+            {(letter.status === LetterStatus.NEW || letter.status === LetterStatus.ANALYZING) && (
                 <div className="mb-16">
                     <button className="btn btn-primary" onClick={() => onAnalyze(letter.id)}>
-                        🤖 Анализировать письмо
+                        Анализировать письмо
                     </button>
                 </div>
             )}
@@ -89,7 +89,7 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
                     </div>
                     {letter.deadline && (
                         <div className="detail-row">
-                            <div className="detail-label">⏰ Дедлайн:</div>
+                            <div className="detail-label">Дедлайн:</div>
                             <div className="detail-value" style={{ color: 'var(--danger)', fontWeight: 600 }}>
                                 {format(new Date(letter.deadline), 'dd MMMM yyyy, HH:mm', { locale: ru })}
                             </div>
@@ -186,12 +186,12 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
 
             {letter.risks && letter.risks.length > 0 && (
                 <div className="detail-section">
-                    <h3 className="detail-section-title">⚠️ Выявленные риски</h3>
+                    <h3 className="detail-section-title">Выявленные риски</h3>
                     {letter.risks.map((risk, idx) => (
                         <div key={idx} className={`risk-item ${risk.level}`}>
-                            <div className="risk-level">{risk.level === 'high' ? '🔴 Высокий' : risk.level === 'medium' ? '🟡 Средний' : '🟢 Низкий'}</div>
+                            <div className="risk-level">{risk.level === 'high' ? 'Высокий' : risk.level === 'medium' ? 'Средний' : 'Низкий'}</div>
                             <div className="risk-description">{risk.description}</div>
-                            {risk.recommendation && <div className="risk-recommendation">💡 {risk.recommendation}</div>}
+                            {risk.recommendation && <div className="risk-recommendation">Рекомендация: {risk.recommendation}</div>}
                         </div>
                     ))}
                 </div>

@@ -7,6 +7,7 @@ import logging
 from app.api.routes import router as letters_router, mail_router
 from app.database import engine, Base, get_db
 from app.services.mail_service import start_mail_monitoring
+from app.services.priority_service import recalculate_priorities
 
 # Настройка логирования
 logging.basicConfig(
@@ -23,12 +24,14 @@ async def lifespan(app: FastAPI):
     """Управление жизненным циклом приложения"""
     # Запуск фоновых задач
     mail_task = asyncio.create_task(start_mail_monitoring(get_db))
+    priority_task = asyncio.create_task(recalculate_priorities(get_db))
     logging.info("✅ Приложение запущено, мониторинг почты активен")
     
     yield
     
     # Остановка фоновых задач
     mail_task.cancel()
+    priority_task.cancel()
     logging.info("⏸️ Приложение остановлено")
 
 

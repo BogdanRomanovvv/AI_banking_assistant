@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from app.models import Letter, LetterStatus
 from app.schemas import LetterCreate, LetterUpdate
 from app.services.yandex_gpt import yandex_gpt_service
+from app.services.email_sender import send_email
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -41,7 +42,12 @@ class LetterService:
         letter.classification_data = analysis.get("classification")
         letter.letter_type = analysis.get("classification", {}).get("type", "other")
         letter.formality_level = analysis.get("formality_level", "neutral")
-        letter.sla_hours = analysis.get("sla_hours", 24)
+        # SLA может вернуться None из анализа — подставляем безопасное значение
+        sla = analysis.get("sla_hours", 24)
+        try:
+            letter.sla_hours = int(sla) if sla is not None else 24
+        except (ValueError, TypeError):
+            letter.sla_hours = 24
         letter.priority = analysis.get("priority", 2)
         letter.required_departments = analysis.get("required_departments", [])
         letter.extracted_entities = analysis.get("extracted_entities")
@@ -49,7 +55,9 @@ class LetterService:
         letter.approval_route = analysis.get("approval_route", [])
         
         # Рассчитываем дедлайн
-        letter.deadline = datetime.now() + timedelta(hours=letter.sla_hours)
+        # Защита от None/нечислового значения
+        safe_sla = letter.sla_hours if isinstance(letter.sla_hours, int) else 24
+        letter.deadline = datetime.now() + timedelta(hours=safe_sla)
         
         # Генерация вариантов ответов
         draft_responses = await yandex_gpt_service.generate_responses(
@@ -121,15 +129,15 @@ class LetterService:
         if not letter:
             raise ValueError("Letter not found")
         
-        if not letter.approval_comments:
-            letter.approval_comments = []
-        
-        letter.approval_comments.append({
+        # Обновляем JSON-список через новое присваивание, чтобы SQLAlchemy зафиксировал изменение
+        existing_comments = letter.approval_comments or []
+        new_comment = {
             "department": department,
             "comment": comment,
             "approved": approved,
             "timestamp": datetime.now().isoformat()
-        })
+        }
+        letter.approval_comments = [*existing_comments, new_comment]
         
         # Если отклонено - возвращаем на доработку
         if not approved:
@@ -155,6 +163,16 @@ class LetterService:
                 letter.final_response = letter.selected_response
         
         db.commit()
+        
+        # Если письмо полностью согласовано — отправляем ответ отправителю
+        if letter.status == LetterStatus.APPROVED and letter.sender_email and letter.final_response:
+            subject = f"Re: {letter.subject}"
+            send_email(
+                to_email=letter.sender_email,
+                subject=subject,
+                body=letter.final_response,
+                reply_to=None
+            )
         db.refresh(letter)
         return letter
 

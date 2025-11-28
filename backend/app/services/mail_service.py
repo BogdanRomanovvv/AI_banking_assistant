@@ -164,14 +164,22 @@ class YandexMailService:
                     sender_name, sender_email = self._extract_email(from_header)
                     body = self._get_email_body(msg)
                     
-                    # Проверяем дубликаты
+                    # Проверяем дубликаты:
+                    # учитываем совпадение темы, отправителя и полного текста письма,
+                    # чтобы не пропускать новые письма с тем же сабжектом
                     existing = db.query(Letter).filter(
                         Letter.subject == subject,
-                        Letter.sender_email == sender_email
+                        Letter.sender_email == sender_email,
+                        Letter.body == body
                     ).first()
                     
                     if existing:
                         logger.info(f"Письмо уже существует: {subject[:50]}...")
+                        # Помечаем как прочитанное, чтобы не возвращалось снова
+                        try:
+                            self.client.add_flags([msg_id], [b'\\Seen'])
+                        except Exception as e:
+                            logger.warning(f"Не удалось пометить дубликат как прочитанный: {e}")
                         continue
                     
                     # Создаем письмо
@@ -191,6 +199,12 @@ class YandexMailService:
                     
                     created_letters.append(letter)
                     logger.info(f"✅ Создано письмо #{letter.id}: {subject[:50]}...")
+
+                    # Помечаем письмо как прочитанное в почтовом ящике
+                    try:
+                        self.client.add_flags([msg_id], [b'\\Seen'])
+                    except Exception as e:
+                        logger.warning(f"Не удалось пометить письмо как прочитанное: {e}")
                     
                 except Exception as e:
                     logger.error(f"Ошибка обработки письма {msg_id}: {e}")

@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     yandex_mail_imap_server: str = "imap.yandex.ru"
     yandex_mail_imap_port: int = 993
     yandex_mail_check_interval: int = 60  # секунды
+
+    # SMTP для исходящих писем
+    yandex_mail_smtp_server: str = "smtp.yandex.ru"
+    yandex_mail_smtp_port: int = 465  # SSL
+    yandex_mail_smtp_use_ssl: bool = True
     
     class Config:
         env_file = ".env"
