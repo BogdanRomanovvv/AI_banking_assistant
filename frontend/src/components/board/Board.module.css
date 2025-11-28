@@ -1,0 +1,56 @@
+.board {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: var(--spacing-xl);
+  background-color: var(--color-white);
+}
+
+.columns {
+  display: flex;
+  gap: var(--spacing-lg);
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: var(--spacing-md);
+}
+
+/* Кастомный скроллбар для горизонтального scrolling */
+.columns::-webkit-scrollbar {
+  height: 8px;
+}
+
+.columns::-webkit-scrollbar-track {
+  background: var(--color-gray-100);
+  border-radius: var(--radius-sm);
+}
+
+.columns::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: var(--radius-sm);
+}
+
+.columns::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-500);
+}
+
+@media (max-width: 1024px) {
+  .board {
+    padding: var(--spacing-md);
+  }
+  
+  .columns {
+    gap: var(--spacing-md);
+  }
+}
+
+@media (max-width: 768px) {
+  .board {
+    padding: var(--spacing-sm);
+  }
+  
+  .columns {
+    gap: var(--spacing-sm);
+  }
+}

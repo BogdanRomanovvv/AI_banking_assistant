@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { userService, authService } from '../services/api';
-import { User, UserCreate, UserRole } from '../types';
+import React, { useState } from 'react';
+import { authService } from '../services/api';
+import { UserCreate, UserRole } from '../types';
 import '../App.css';
 
 interface FormData {
@@ -23,23 +23,23 @@ const UserManagement: React.FC = () => {
         middle_name: '',
         role: UserRole.OPERATOR
     });
-    const [users, setUsers] = useState<User[]>([]);
+    // const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
-    useEffect(() => {
-        loadUsers();
-    }, []);
+    // useEffect(() => {
+    //     loadUsers();
+    // }, []);
 
-    const loadUsers = async () => {
-        try {
-            const data = await userService.getUsers();
-            setUsers(data);
-        } catch (err) {
-            console.error('Ошибка при загрузке пользователей:', err);
-        }
-    };
+    // const loadUsers = async () => {
+    //     try {
+    //         const data = await userService.getUsers();
+    //         setUsers(data);
+    //     } catch (err) {
+    //         console.error('Ошибка при загрузке пользователей:', err);
+    //     }
+    // };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -81,7 +81,7 @@ const UserManagement: React.FC = () => {
                 role: UserRole.OPERATOR
             });
 
-            loadUsers();
+            // loadUsers();
         } catch (err: any) {
             setError(err.response?.data?.detail || 'Произошла ошибка при регистрации');
         } finally {
@@ -89,35 +89,35 @@ const UserManagement: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm('Вы уверены, что хотите удалить этого пользователя?')) {
-            return;
-        }
+    // const handleDelete = async (id: number) => {
+    //     if (!window.confirm('Вы уверены, что хотите удалить этого пользователя?')) {
+    //         return;
+    //     }
 
-        try {
-            await userService.deleteUser(id);
-            setSuccess('Пользователь успешно удален');
-            loadUsers();
-        } catch (err: any) {
-            setError(err.response?.data?.detail || 'Произошла ошибка при удалении');
-        }
-    };
+    //     try {
+    //         await userService.deleteUser(id);
+    //         setSuccess('Пользователь успешно удален');
+    //         loadUsers();
+    //     } catch (err: any) {
+    //         setError(err.response?.data?.detail || 'Произошла ошибка при удалении');
+    //     }
+    // };
 
-    const getFullName = (user: User) => {
-        return `${user.last_name} ${user.first_name}${user.middle_name ? ' ' + user.middle_name : ''}`;
-    };
+    // const getFullName = (user: User) => {
+    //     return `${user.last_name} ${user.first_name}${user.middle_name ? ' ' + user.middle_name : ''}`;
+    // };
 
-    const getRoleName = (role: UserRole) => {
-        const roleNames: Record<UserRole, string> = {
-            [UserRole.ADMIN]: 'Администратор',
-            [UserRole.OPERATOR]: 'Оператор',
-            [UserRole.LAWYER]: 'Юрист',
-            [UserRole.ACCOUNTANT]: 'Бухгалтер',
-            [UserRole.MANAGER]: 'Менеджер',
-            [UserRole.COMPLIANCE]: 'Комплаенс'
-        };
-        return roleNames[role] || role;
-    };
+    // const getRoleName = (role: UserRole) => {
+    //     const roleNames: Record<UserRole, string> = {
+    //         [UserRole.ADMIN]: 'Администратор',
+    //         [UserRole.OPERATOR]: 'Оператор',
+    //         [UserRole.LAWYER]: 'Юрист',
+    //         [UserRole.ACCOUNTANT]: 'Бухгалтер',
+    //         [UserRole.MANAGER]: 'Менеджер',
+    //         [UserRole.COMPLIANCE]: 'Комплаенс'
+    //     };
+    //     return roleNames[role] || role;
+    // };
 
     return (
         <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -316,8 +316,8 @@ const UserManagement: React.FC = () => {
                 </form>
             </div>
 
-            {/* Список пользователей */}
-            <div>
+            {/* Список пользователей - скрыт */}
+            {/* <div>
                 <h2>Зарегистрированные пользователи ({users.length})</h2>
                 {users.length === 0 ? (
                     <p style={{ color: '#666' }}>Пока нет зарегистрированных пользователей</p>
@@ -375,7 +375,7 @@ const UserManagement: React.FC = () => {
                         ))}
                     </div>
                 )}
-            </div>
+            </div> */}
         </div>
     );
 };

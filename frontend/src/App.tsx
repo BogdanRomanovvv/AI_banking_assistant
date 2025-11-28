@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import './styles/global.css';
 import './App.css';
 import { Letter, LetterStatus, User } from './types';
 import { letterService, authService } from './services/api';
-import { KanbanBoard } from './components/KanbanBoard';
+import { Board } from './components/board';
+import { Header } from './components/layout';
+import { Modal } from './components/ui';
 import { LetterDetail } from './components/LetterDetail';
 import UserManagement from './components/UserManagement';
 import LoginForm from './components/LoginForm';
@@ -162,17 +165,6 @@ function App() {
         setSelectedLetter(null);
     };
 
-    const getRoleName = (role: string) => {
-        const roleNames: Record<string, string> = {
-            'admin': 'Администратор',
-            'operator': 'Оператор',
-            'lawyer': 'Юрист',
-            'accountant': 'Бухгалтер',
-            'manager': 'Менеджер'
-        };
-        return roleNames[role] || role;
-    };
-
     // Если не аутентифицирован - показываем форму входа
     if (!isAuthenticated) {
         return <LoginForm onLoginSuccess={handleLoginSuccess} />;
@@ -180,92 +172,52 @@ function App() {
 
     return (
         <div className="app">
-            <header className="header">
-                <div className="header-content">
-                    <h1>Banking AI Assistant</h1>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                        <span style={{ marginRight: '20px', color: '#fff' }}>
-                            {currentUser?.first_name} {currentUser?.last_name} ({getRoleName(currentUser?.role || '')})
-                        </span>
-                        <button
-                            onClick={() => setCurrentView('kanban')}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: currentView === 'kanban' ? '#1976d2' : '#fff',
-                                color: currentView === 'kanban' ? '#fff' : '#333',
-                                border: '1px solid #1976d2',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontWeight: currentView === 'kanban' ? 'bold' : 'normal'
-                            }}
-                        >
-                            Письма
-                        </button>
-                        {currentUser?.role === 'admin' && (
-                            <button
-                                onClick={() => setCurrentView('users')}
-                                style={{
-                                    padding: '8px 16px',
-                                    backgroundColor: currentView === 'users' ? '#1976d2' : '#fff',
-                                    color: currentView === 'users' ? '#fff' : '#333',
-                                    border: '1px solid #1976d2',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontWeight: currentView === 'users' ? 'bold' : 'normal'
-                                }}
-                            >
-                                Пользователи
-                            </button>
-                        )}
-                        <button
-                            onClick={handleLogout}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: '#d32f2f',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontWeight: 'bold'
-                            }}
-                        >
-                            Выйти
-                        </button>
+            <Header
+                currentView={currentView}
+                onViewChange={setCurrentView}
+                currentUser={currentUser}
+                onLogout={handleLogout}
+            />
+
+            <main className="main-content">
+                {error && (
+                    <div className="error-banner">
+                        <span>{error}</span>
+                        <button onClick={() => setError(null)}>✕</button>
                     </div>
-                </div>
-            </header>
-
-            <div className="container">
-                {error && <div className="error">{error}</div>}
-
-                {loading && currentView === 'kanban' && <div className="loading">Загрузка...</div>}
+                )}
 
                 {currentView === 'kanban' ? (
-                    <KanbanBoard
-                        letters={letters}
-                        onSelectLetter={handleSelectLetter}
-                        onStatusChange={handleStatusChange}
-                    />
+                    <>
+                        {loading && <div className="loading-overlay">Загрузка...</div>}
+                        <Board
+                            letters={letters}
+                            onCardClick={handleSelectLetter}
+                            onStatusChange={handleStatusChange}
+                        />
+                    </>
                 ) : (
                     <UserManagement />
                 )}
-            </div>
+            </main>
 
-            {showDetail && selectedLetter && currentView === 'kanban' && (
-                <div className="modal-overlay" onClick={handleCloseModal}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="modal-close" onClick={handleCloseModal}>×</button>
-                        <LetterDetail
-                            letter={selectedLetter}
-                            currentUser={currentUser!}
-                            onAnalyze={handleAnalyzeLetter}
-                            onUpdateResponse={handleUpdateResponse}
-                            onStartApproval={handleStartApproval}
-                            onApprovalAction={handleApprovalAction}
-                        />
-                    </div>
-                </div>
-            )}
+            <Modal
+                isOpen={showDetail && selectedLetter !== null}
+                onClose={handleCloseModal}
+                title={`Письмо MBA-${selectedLetter?.id}`}
+                size="lg"
+            >
+                {selectedLetter && (
+                    <LetterDetail
+                        letter={selectedLetter}
+                        currentUser={currentUser!}
+                        onAnalyze={handleAnalyzeLetter}
+                        onUpdateResponse={handleUpdateResponse}
+                        onStartApproval={handleStartApproval}
+                        onApprovalAction={handleApprovalAction}
+                    />
+                )}
+            </Modal>
         </div>
     );
 }

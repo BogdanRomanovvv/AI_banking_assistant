@@ -55,8 +55,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                 width: '100%',
                 maxWidth: '400px'
             }}>
-                <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#1976d2' }}>
-                    Banking AI Assistant
+                <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#1E6FD9' }}>
+                    Банковский Помощник AI
                 </h1>
 
                 <form onSubmit={handleSubmit}>
