@@ -136,7 +136,7 @@ export const ApproverKanbanBoard: React.FC<ApproverKanbanBoardProps> = ({
             </div>
             {letter.reserved_at && (
                 <div style={{ fontSize: '11px', color: '#1890ff', marginTop: '4px' }}>
-                    ⏱️ Взято в работу: {formatDate(letter.reserved_at)}
+                    Взято в работу: {formatDate(letter.reserved_at)}
                 </div>
             )}
         </div>
@@ -183,7 +183,7 @@ export const ApproverKanbanBoard: React.FC<ApproverKanbanBoardProps> = ({
                 onDrop={(e) => handleDrop(e, 'my')}
             >
                 <h3 style={{ marginTop: 0, marginBottom: '16px' }}>
-                    ✅ В процессе согласования ({myLetters.length})
+                    В процессе согласования ({myLetters.length})
                 </h3>
                 <div style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
                     Ваши зарезервированные письма

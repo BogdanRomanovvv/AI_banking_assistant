@@ -11,6 +11,7 @@ from app.schemas import (
 )
 from app.services.letter_service import letter_service
 from app.services.mail_service import mail_service
+from app.services.analytics_service import analytics_service
 from app.models import LetterStatus, User
 from app.auth import (
     get_password_hash, authenticate_user, create_access_token,
@@ -24,6 +25,7 @@ router = APIRouter(prefix="/api/letters", tags=["letters"])
 mail_router = APIRouter(prefix="/api/mail", tags=["mail"])
 user_router = APIRouter(prefix="/api/users", tags=["users"])
 auth_router = APIRouter(prefix="/api/auth", tags=["auth"])
+analytics_router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
 
 # Auth endpoints
@@ -374,3 +376,83 @@ def check_mail_manually(db: Session = Depends(get_db)):
 def get_mail_status():
     """Статус подключения к почте"""
     return mail_service.get_status()
+
+
+# Analytics endpoints
+@analytics_router.get("/processing-time", response_model=dict)
+def get_processing_time_analytics(
+    days: int = 30,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Метрики времени обработки писем"""
+    return analytics_service.get_processing_time_metrics(db, days)
+
+
+@analytics_router.get("/sla-compliance", response_model=dict)
+def get_sla_compliance_analytics(
+    days: int = 30,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Статистика соблюдения SLA"""
+    return analytics_service.get_sla_compliance(db, days)
+
+
+@analytics_router.get("/letter-types", response_model=list)
+def get_letter_type_analytics(
+    days: int = 30,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Распределение писем по типам"""
+    return analytics_service.get_letter_type_distribution(db, days)
+
+
+@analytics_router.get("/status-distribution", response_model=list)
+def get_status_distribution_analytics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Распределение по статусам"""
+    return analytics_service.get_status_distribution(db)
+
+
+@analytics_router.get("/priority-distribution", response_model=list)
+def get_priority_distribution_analytics(
+    days: int = 30,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Распределение по приоритетам"""
+    return analytics_service.get_priority_distribution(db, days)
+
+
+@analytics_router.get("/daily-stats", response_model=list)
+def get_daily_analytics(
+    days: int = 14,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Ежедневная статистика"""
+    return analytics_service.get_daily_statistics(db, days)
+
+
+@analytics_router.get("/department-workload", response_model=list)
+def get_department_workload_analytics(
+    days: int = 30,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Нагрузка по отделам"""
+    return analytics_service.get_department_workload(db, days)
+
+
+@analytics_router.get("/summary", response_model=dict)
+def get_overall_summary_analytics(
+    days: int = 30,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Общая сводка"""
+    return analytics_service.get_overall_summary(db, days)

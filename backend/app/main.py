@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import asyncio
 import logging
 
-from app.api.routes import router as letters_router, mail_router, user_router, auth_router
+from app.api.routes import router as letters_router, mail_router, user_router, auth_router, analytics_router
 from app.database import engine, Base, get_db
 from app.services.mail_service import start_mail_monitoring
 from app.services.priority_service import recalculate_priorities
@@ -56,6 +56,7 @@ app.include_router(auth_router)
 app.include_router(letters_router)
 app.include_router(mail_router)
 app.include_router(user_router)
+app.include_router(analytics_router)
 
 
 @app.get("/")

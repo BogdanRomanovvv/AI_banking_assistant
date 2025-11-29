@@ -5,13 +5,14 @@ import { letterService, authService } from './services/api';
 import { KanbanBoard } from './components/KanbanBoard';
 import { ApproverKanbanBoard } from './components/ApproverKanbanBoard';
 import { LetterDetail } from './components/LetterDetail';
+import { Dashboard } from './components/Dashboard';
 import UserManagement from './components/UserManagement';
 import LoginForm from './components/LoginForm';
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [currentView, setCurrentView] = useState<'kanban' | 'users'>('kanban');
+    const [currentView, setCurrentView] = useState<'kanban' | 'analytics' | 'users'>('kanban');
     const [letters, setLetters] = useState<Letter[]>([]);
     const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
     const [showDetail, setShowDetail] = useState(false);
@@ -228,6 +229,22 @@ function App() {
                         >
                             Письма
                         </button>
+                        {(currentUser?.role === 'admin' || currentUser?.role === 'operator') && (
+                            <button
+                                onClick={() => setCurrentView('analytics')}
+                                style={{
+                                    padding: '8px 16px',
+                                    backgroundColor: currentView === 'analytics' ? '#1976d2' : '#fff',
+                                    color: currentView === 'analytics' ? '#fff' : '#333',
+                                    border: '1px solid #1976d2',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontWeight: currentView === 'analytics' ? 'bold' : 'normal'
+                                }}
+                            >
+                                Аналитика
+                            </button>
+                        )}
                         {currentUser?.role === 'admin' && (
                             <button
                                 onClick={() => setCurrentView('users')}
@@ -283,6 +300,8 @@ function App() {
                             onStatusChange={handleStatusChange}
                         />
                     )
+                ) : currentView === 'analytics' ? (
+                    <Dashboard currentUser={currentUser!} />
                 ) : (
                     <UserManagement />
                 )}

@@ -3,7 +3,10 @@ import logging
 import re
 import asyncio
 import ssl
+import smtplib
 from email.header import decode_header
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from typing import List, Optional
 from datetime import datetime
 from imapclient import IMAPClient
@@ -258,6 +261,56 @@ class YandexMailService:
                 "connected": False,
                 "email": settings.yandex_mail_login
             }
+    
+    def send_email(self, to_email: str, subject: str, body: str, reply_to: Optional[str] = None) -> bool:
+        """Отправка email через SMTP"""
+        try:
+            if not settings.yandex_mail_login or not settings.yandex_mail_password:
+                logger.error("❌ Настройки SMTP не заданы")
+                return False
+            
+            # Создаем сообщение
+            msg = MIMEMultipart('alternative')
+            msg['From'] = settings.yandex_mail_login
+            msg['To'] = to_email
+            msg['Subject'] = subject
+            
+            if reply_to:
+                msg['In-Reply-To'] = reply_to
+                msg['References'] = reply_to
+            
+            # Добавляем текст письма
+            text_part = MIMEText(body, 'plain', 'utf-8')
+            msg.attach(text_part)
+            
+            # Подключаемся к SMTP серверу
+            if settings.yandex_mail_smtp_use_ssl:
+                smtp = smtplib.SMTP_SSL(
+                    settings.yandex_mail_smtp_server,
+                    settings.yandex_mail_smtp_port,
+                    timeout=30
+                )
+            else:
+                smtp = smtplib.SMTP(
+                    settings.yandex_mail_smtp_server,
+                    settings.yandex_mail_smtp_port,
+                    timeout=30
+                )
+                smtp.starttls()
+            
+            # Авторизуемся
+            smtp.login(settings.yandex_mail_login, settings.yandex_mail_password)
+            
+            # Отправляем
+            smtp.send_message(msg)
+            smtp.quit()
+            
+            logger.info(f"✅ Письмо отправлено на {to_email}: {subject[:50]}...")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Ошибка отправки письма: {e}")
+            return False
 
 
 # Глобальный экземпляр сервиса
