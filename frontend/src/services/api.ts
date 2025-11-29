@@ -1,5 +1,9 @@
 import axios from 'axios';
-import { Letter, LetterCreate, LetterUpdate, LetterStatus, ApprovalCommentRequest, User, UserCreate, UserUpdate, LoginCredentials, RegisterData, Token } from '../types';
+import {
+    Letter, LetterCreate, LetterUpdate, LetterStatus, ApprovalCommentRequest,
+    User, UserCreate, UserUpdate, LoginCredentials, RegisterData, Token,
+    Notification, UnreadCountResponse
+} from '../types';
 
 const API_BASE_URL = '/api';
 
@@ -142,5 +146,38 @@ export const letterService = {
     addApprovalComment: async (id: number, comment: ApprovalCommentRequest): Promise<Letter> => {
         const response = await api.post<Letter>(`/letters/${id}/approval/comment`, comment);
         return response.data;
+    },
+};
+
+// Notification service
+export const notificationService = {
+    // Получить уведомления
+    getNotifications: async (limit: number = 50, onlyUnread: boolean = false): Promise<Notification[]> => {
+        const response = await api.get<Notification[]>('/notifications/', {
+            params: { limit, only_unread: onlyUnread }
+        });
+        return response.data;
+    },
+
+    // Получить количество непрочитанных
+    getUnreadCount: async (): Promise<number> => {
+        const response = await api.get<UnreadCountResponse>('/notifications/unread/count');
+        return response.data.count;
+    },
+
+    // Пометить как прочитанное
+    markAsRead: async (id: number): Promise<Notification> => {
+        const response = await api.patch<Notification>(`/notifications/${id}/read`);
+        return response.data;
+    },
+
+    // Пометить все как прочитанные
+    markAllAsRead: async (): Promise<void> => {
+        await api.post('/notifications/read-all');
+    },
+
+    // Удалить уведомление
+    deleteNotification: async (id: number): Promise<void> => {
+        await api.delete(`/notifications/${id}`);
     },
 };

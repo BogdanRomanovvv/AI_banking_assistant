@@ -32,6 +32,14 @@ export enum UserRole {
     MARKETING = 'marketing'
 }
 
+export enum NotificationType {
+    LETTER_ASSIGNED = 'letter_assigned',
+    LETTER_APPROVED = 'letter_approved',
+    LETTER_REJECTED = 'letter_rejected',
+    SLA_WARNING = 'sla_warning',
+    SLA_EXPIRED = 'sla_expired'
+}
+
 // Auth types
 export interface Token {
     access_token: string;
@@ -172,4 +180,20 @@ export interface ApprovalCommentRequest {
     department: string;
     comment: string;
     approved: boolean;
+}
+
+// Notification types
+export interface Notification {
+    id: number;
+    user_id: number;
+    letter_id?: number;
+    type: NotificationType;
+    title: string;
+    message: string;
+    is_read: boolean;
+    created_at: string;
+}
+
+export interface UnreadCountResponse {
+    count: number;
 }

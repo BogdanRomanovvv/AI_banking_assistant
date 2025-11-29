@@ -4,10 +4,18 @@ from contextlib import asynccontextmanager
 import asyncio
 import logging
 
-from app.api.routes import router as letters_router, mail_router, user_router, auth_router, analytics_router
+from app.api.routes import (
+    router as letters_router, 
+    mail_router, 
+    user_router, 
+    auth_router, 
+    analytics_router,
+    notification_router
+)
 from app.database import engine, Base, get_db
 from app.services.mail_service import start_mail_monitoring
 from app.services.priority_service import recalculate_priorities
+from app.services.sla_monitor_service import monitor_sla
 
 # Настройка логирования
 logging.basicConfig(
@@ -25,13 +33,15 @@ async def lifespan(app: FastAPI):
     # Запуск фоновых задач
     mail_task = asyncio.create_task(start_mail_monitoring(get_db))
     priority_task = asyncio.create_task(recalculate_priorities(get_db))
-    logging.info("✅ Приложение запущено, мониторинг почты активен")
+    sla_monitor_task = asyncio.create_task(monitor_sla(get_db))
+    logging.info("✅ Приложение запущено, мониторинг почты и SLA активны")
     
     yield
     
     # Остановка фоновых задач
     mail_task.cancel()
     priority_task.cancel()
+    sla_monitor_task.cancel()
     logging.info("⏸️ Приложение остановлено")
 
 
@@ -57,6 +67,7 @@ app.include_router(letters_router)
 app.include_router(mail_router)
 app.include_router(user_router)
 app.include_router(analytics_router)
+app.include_router(notification_router)
 
 
 @app.get("/")

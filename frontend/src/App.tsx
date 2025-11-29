@@ -8,6 +8,7 @@ import { LetterDetail } from './components/LetterDetail';
 import { Dashboard } from './components/Dashboard';
 import UserManagement from './components/UserManagement';
 import LoginForm from './components/LoginForm';
+import { NotificationBell } from './components/NotificationBell';
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -233,6 +234,16 @@ function App() {
                     </nav>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <NotificationBell
+                        onNotificationClick={(letterId) => {
+                            if (letterId) {
+                                const letter = letters.find(l => l.id === letterId);
+                                if (letter) {
+                                    handleSelectLetter(letter);
+                                }
+                            }
+                        }}
+                    />
                     <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
                             {currentUser?.first_name} {currentUser?.last_name}

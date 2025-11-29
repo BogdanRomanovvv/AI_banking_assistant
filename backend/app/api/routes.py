@@ -7,11 +7,13 @@ from app.database import get_db
 from app.schemas import (
     LetterCreate, LetterResponse, LetterUpdate, 
     UserCreate, UserUpdate, UserResponse,
-    Token, UserLogin, UserRegister
+    Token, UserLogin, UserRegister,
+    NotificationResponse, NotificationUpdate, UnreadCountResponse
 )
 from app.services.letter_service import letter_service
 from app.services.mail_service import mail_service
 from app.services.analytics_service import analytics_service
+from app.services import notification_service
 from app.models import LetterStatus, User
 from app.auth import (
     get_password_hash, authenticate_user, create_access_token,
@@ -26,6 +28,7 @@ mail_router = APIRouter(prefix="/api/mail", tags=["mail"])
 user_router = APIRouter(prefix="/api/users", tags=["users"])
 auth_router = APIRouter(prefix="/api/auth", tags=["auth"])
 analytics_router = APIRouter(prefix="/api/analytics", tags=["analytics"])
+notification_router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 
 
 # Auth endpoints
@@ -288,7 +291,20 @@ def start_approval(
 ):
     """Начать процесс согласования (операторы и админы)"""
     try:
-        return letter_service.start_approval(db, letter_id)
+        letter = letter_service.start_approval(db, letter_id)
+        
+        # Создать уведомления для согласующих
+        if letter.current_approver:
+            # Определяем роль по названию отдела
+            role_map = {
+                'Юридический отдел': 'lawyer',
+                'Отдел маркетинга': 'marketing'
+            }
+            approver_role = role_map.get(letter.current_approver)
+            if approver_role:
+                notification_service.notify_letter_assigned(db, letter, approver_role)
+        
+        return letter
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -338,13 +354,22 @@ def add_approval_comment(
             )
     
     try:
-        return letter_service.add_approval_comment(
+        letter = letter_service.add_approval_comment(
             db, 
             letter_id, 
             comment_data.department, 
             comment_data.comment, 
             comment_data.approved
         )
+        
+        # Создать уведомление оператору
+        # Предполагаем, что письмо обрабатывал operator
+        if comment_data.approved:
+            notification_service.notify_letter_approved(db, letter, "operator")
+        else:
+            notification_service.notify_letter_rejected(db, letter, "operator", comment_data.comment)
+        
+        return letter
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -456,3 +481,79 @@ def get_overall_summary_analytics(
 ):
     """Общая сводка"""
     return analytics_service.get_overall_summary(db, days)
+
+
+# Notification endpoints
+@notification_router.get("/", response_model=List[NotificationResponse])
+def get_notifications(
+    limit: int = 50,
+    only_unread: bool = False,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Получить уведомления текущего пользователя"""
+    notifications = notification_service.get_user_notifications(
+        db=db,
+        user_id=current_user.id,
+        limit=limit,
+        only_unread=only_unread
+    )
+    return notifications
+
+
+@notification_router.get("/unread/count", response_model=UnreadCountResponse)
+def get_unread_count(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Получить количество непрочитанных уведомлений"""
+    count = notification_service.get_unread_count(db=db, user_id=current_user.id)
+    return {"count": count}
+
+
+@notification_router.patch("/{notification_id}/read", response_model=NotificationResponse)
+def mark_notification_as_read(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Пометить уведомление как прочитанное"""
+    notification = notification_service.mark_as_read(
+        db=db,
+        notification_id=notification_id,
+        user_id=current_user.id
+    )
+    
+    if not notification:
+        raise HTTPException(status_code=404, detail="Уведомление не найдено")
+    
+    return notification
+
+
+@notification_router.post("/read-all", response_model=dict)
+def mark_all_as_read(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Пометить все уведомления как прочитанные"""
+    count = notification_service.mark_all_as_read(db=db, user_id=current_user.id)
+    return {"marked_as_read": count}
+
+
+@notification_router.delete("/{notification_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_notification(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Удалить уведомление"""
+    success = notification_service.delete_notification(
+        db=db,
+        notification_id=notification_id,
+        user_id=current_user.id
+    )
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Уведомление не найдено")
+    
+    return None

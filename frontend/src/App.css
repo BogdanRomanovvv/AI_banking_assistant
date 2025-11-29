@@ -247,8 +247,8 @@ h6 {
 
 /* Kanban Board */
 .kanban-container {
-    padding: 20px 24px;
-    overflow-x: auto;
+    padding: 20px;
+    overflow-x: hidden;
     height: calc(100vh - 64px);
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
@@ -258,13 +258,15 @@ h6 {
     gap: 16px;
     min-height: 100%;
     align-items: flex-start;
+    width: 100%;
+    justify-content: space-between;
 }
 
 .kanban-column {
     background: var(--bg-hover);
     border-radius: var(--radius-lg);
-    min-width: 280px;
-    max-width: 280px;
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     max-height: calc(100vh - 128px);
@@ -1364,4 +1366,384 @@ html {
 ::selection {
     background: var(--primary-light);
     color: var(--primary);
+}
+
+/* ========================================
+   NOTIFICATION DRAWER (������ �����������)
+   ======================================== */
+
+/* ������ ������������ */
+.notification-bell-button {
+    position: relative;
+    background: transparent;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.notification-bell-button:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* �������� ���� �� ������������ */
+@keyframes bellRing {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    10% {
+        transform: rotate(10deg);
+    }
+
+    20% {
+        transform: rotate(-10deg);
+    }
+
+    30% {
+        transform: rotate(10deg);
+    }
+
+    40% {
+        transform: rotate(-10deg);
+    }
+
+    50% {
+        transform: rotate(0deg);
+    }
+}
+
+.notification-bell-button:hover svg {
+    animation: bellRing 0.6s ease-in-out;
+}
+
+.bell-wave {
+    animation: waveAnimation 1.5s ease-in-out infinite;
+}
+
+@keyframes waveAnimation {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    50% {
+        opacity: 0.3;
+        transform: translateX(2px);
+    }
+}
+
+/* ����� � ����������� */
+.notification-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: var(--danger);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 10px;
+    min-width: 16px;
+    text-align: center;
+    line-height: 1.2;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* ���������� ���� */
+.notification-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ������ */
+.notification-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 420px;
+    max-width: 90vw;
+    height: 100vh;
+    background: white;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notification-drawer.open {
+    transform: translateX(0);
+}
+
+/* ��������� ������ */
+.notification-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-primary);
+}
+
+.notification-drawer-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.notification-close {
+    background: transparent;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* �������� (������ "��������� ���") */
+.notification-drawer-actions {
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-primary);
+}
+
+.btn-mark-all {
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.btn-mark-all:hover:not(:disabled) {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-mark-all:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ������� ������ */
+.notification-drawer-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+/* ������ ��������� */
+.notification-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 24px;
+    text-align: center;
+    color: var(--text-tertiary);
+    height: 100%;
+}
+
+.notification-empty svg {
+    width: 80px;
+    height: 80px;
+    opacity: 0.3;
+    margin-bottom: 16px;
+}
+
+.notification-empty p {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.notification-empty span {
+    font-size: 14px;
+    color: var(--text-tertiary);
+}
+
+/* ������� ����������� */
+.notification-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    padding: 16px 24px;
+    gap: 12px;
+    cursor: pointer;
+    transition: all var(--transition);
+    border-left: 3px solid transparent;
+}
+
+.notification-item:hover {
+    background: var(--bg-hover);
+}
+
+.notification-item.unread {
+    background: var(--primary-light);
+}
+
+.notification-item.unread .notification-indicator {
+    opacity: 1;
+}
+
+/* ��������� �������������� */
+.notification-indicator {
+    position: absolute;
+    left: 8px;
+    top: 24px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity var(--transition);
+}
+
+/* ������ ���� ����������� */
+.notification-icon {
+    font-size: 28px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* ������� ����������� */
+.notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.notification-message {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.notification-time {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
+/* ������ �������� */
+.notification-delete {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    border-radius: var(--radius);
+    color: var(--text-tertiary);
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+}
+
+.notification-item:hover .notification-delete {
+    opacity: 1;
+}
+
+.notification-delete:hover {
+    background: var(--danger-light);
+    color: var(--danger);
+    transform: scale(1.1);
+}
+
+/* ������������ */
+@media (max-width: 768px) {
+    .notification-drawer {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* ��������� ��� ������ */
+.notification-drawer-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notification-drawer-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.notification-drawer-content::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+.notification-drawer-content::-webkit-scrollbar-thumb:hover {
+    background: var(--border-hover);
 }

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from app.models import LetterType, LetterStatus, FormalityLevel, UserRole
+from app.models import LetterType, LetterStatus, FormalityLevel, UserRole, NotificationType
 
 
 # Auth schemas
@@ -128,3 +128,35 @@ class DraftResponsesModel(BaseModel):
     corporate: str
     client_oriented: str
     brief_info: str
+
+
+# Notification schemas
+class NotificationCreate(BaseModel):
+    user_id: int
+    letter_id: Optional[int] = None
+    type: NotificationType
+    title: str
+    message: str
+
+
+class NotificationResponse(BaseModel):
+    id: int
+    user_id: int
+    letter_id: Optional[int]
+    type: NotificationType
+    title: str
+    message: str
+    is_read: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+        use_enum_values = True
+
+
+class NotificationUpdate(BaseModel):
+    is_read: Optional[bool] = None
+
+
+class UnreadCountResponse(BaseModel):
+    count: int
