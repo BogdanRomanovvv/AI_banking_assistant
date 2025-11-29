@@ -12,7 +12,7 @@ const statusColumns = [
     { status: LetterStatus.IN_PROGRESS, title: 'В обработке' },
     { status: LetterStatus.DRAFT_READY, title: 'Черновик готов' },
     { status: LetterStatus.IN_APPROVAL, title: 'На согласовании' },
-    { status: LetterStatus.APPROVED, title: 'Согласовано' },
+    { status: LetterStatus.APPROVED, title: 'Отправленные' },
 ];
 
 const typeLabels: Record<string, string> = {
