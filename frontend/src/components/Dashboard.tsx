@@ -130,15 +130,15 @@ export const Dashboard: React.FC<DashboardProps> = () => {
     };
 
     if (loading) {
-        return <div style={{ padding: '24px', textAlign: 'center' }}>Загрузка аналитики...</div>;
+        return <div style={{ padding: '24px', textAlign: 'center', minHeight: 'calc(100vh - 64px)', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#ffffff' }}>Загрузка аналитики...</div>;
     }
 
     return (
-        <div style={{ padding: '24px' }}>
+        <div style={{ padding: '24px', minHeight: 'calc(100vh - 64px)', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ margin: 0 }}>Аналитика и метрики</h2>
+                <h2 style={{ margin: 0, color: '#ffffff' }}>Аналитика и метрики</h2>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <label style={{ fontSize: '14px' }}>Период:</label>
+                    <label style={{ fontSize: '14px', color: '#ffffff' }}>Период:</label>
                     <select
                         value={days}
                         onChange={(e) => setDays(Number(e.target.value))}

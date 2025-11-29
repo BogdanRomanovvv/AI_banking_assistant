@@ -66,6 +66,9 @@ class LetterService:
             except (ValueError, TypeError):
                 letter.sla_hours = 24
             
+            # Сохраняем объяснение выбора SLA
+            letter.sla_reasoning = analysis.get("sla_reasoning")
+            
             # Рассчитываем дедлайн
             # Защита от None/нечислового значения
             safe_sla = letter.sla_hours if isinstance(letter.sla_hours, int) else 24

@@ -207,6 +207,11 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
                                 <div className="detail-label">SLA:</div>
                                 <div className="detail-value">
                                     <span className="badge badge-sla">{letter.sla_hours} часов</span>
+                                    {letter.sla_reasoning && (
+                                        <div style={{ marginTop: '8px', fontSize: '14px', color: '#64748B', fontStyle: 'italic' }}>
+                                            💡 {letter.sla_reasoning}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}

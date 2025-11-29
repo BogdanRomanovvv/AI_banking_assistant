@@ -155,7 +155,7 @@ export const ApproverKanbanBoard: React.FC<ApproverKanbanBoardProps> = ({
     );
 
     return (
-        <div style={{ display: 'flex', gap: '16px', height: 'calc(100vh - 200px)', padding: '16px' }}>
+        <div style={{ display: 'flex', gap: '16px', height: 'calc(100vh - 64px)', padding: '16px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
             {/* Колонка: Входящие на согласование */}
             <div
                 style={{

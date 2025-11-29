@@ -137,6 +137,7 @@ export interface Letter {
     status: LetterStatus;
     priority: number;
     sla_hours?: number;
+    sla_reasoning?: string;
     classification_data?: Classification;
     extracted_entities?: ExtractedEntities;
     risks?: Risk[];

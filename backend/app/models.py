@@ -74,6 +74,7 @@ class Letter(Base):
     status = Column(SQLEnum(LetterStatus), default=LetterStatus.NEW)
     priority = Column(Integer, default=2)  # 1-высокий, 2-средний, 3-низкий
     sla_hours = Column(Integer, nullable=True)
+    sla_reasoning = Column(Text, nullable=True)  # Объяснение выбора SLA
     
     # Анализ (JSON)
     classification_data = Column(JSON, nullable=True)  # Полный результат классификации

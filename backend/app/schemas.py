@@ -92,6 +92,7 @@ class LetterResponse(BaseModel):
     status: LetterStatus
     priority: int
     sla_hours: Optional[int]
+    sla_reasoning: Optional[str]
     classification_data: Optional[Dict[str, Any]]
     extracted_entities: Optional[Dict[str, Any]]
     risks: Optional[List[Dict[str, Any]]]
@@ -117,6 +118,7 @@ class AnalysisResponse(BaseModel):
     risks: List[Dict[str, Any]]
     required_departments: List[str]
     sla_hours: int
+    sla_reasoning: Optional[str] = None
     priority: int
     formality_level: str
 
