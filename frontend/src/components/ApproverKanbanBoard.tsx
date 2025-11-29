@@ -100,8 +100,33 @@ export const ApproverKanbanBoard: React.FC<ApproverKanbanBoardProps> = ({
                 borderLeft: `4px solid ${getPriorityColor(letter.priority)}`
             }}
         >
-            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                {letter.subject}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <div style={{ fontWeight: 'bold' }}>
+                    {letter.subject}
+                </div>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    <span style={{
+                        fontSize: '11px',
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        backgroundColor: getPriorityColor(letter.priority),
+                        color: '#fff',
+                        fontWeight: 'bold'
+                    }}>
+                        {letter.priority === 1 ? 'Высокий' : letter.priority === 2 ? 'Средний' : 'Низкий'}
+                    </span>
+                    {letter.sla_hours && (
+                        <span style={{
+                            fontSize: '11px',
+                            padding: '2px 6px',
+                            borderRadius: '3px',
+                            backgroundColor: '#1890ff',
+                            color: '#fff'
+                        }}>
+                            SLA {letter.sla_hours}ч
+                        </span>
+                    )}
+                </div>
             </div>
             <div style={{ fontSize: '12px', color: '#666' }}>
                 От: {letter.sender_name || letter.sender_email || 'Неизвестно'}

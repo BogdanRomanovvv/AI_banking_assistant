@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -185,12 +185,18 @@ def delete_user(
 # Letter endpoints (требуют аутентификации)
 @router.post("/", response_model=LetterResponse, status_code=status.HTTP_201_CREATED)
 def create_letter(
-    letter: LetterCreate, 
+    letter: LetterCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_operator)
+    current_user: User = Depends(require_operator),
+    background_tasks: BackgroundTasks = None
 ):
     """Создание нового письма (операторы и админы)"""
-    return letter_service.create_letter(db, letter)
+    new_letter = letter_service.create_letter(db, letter)
+    # Запуск асинхронного анализа письма сразу после создания
+    if background_tasks is not None:
+        # Передаем id письма и сессию БД
+        background_tasks.add_task(letter_service.run_analysis_sync, db, new_letter.id)
+    return new_letter
 
 
 @router.get("/", response_model=List[LetterResponse])

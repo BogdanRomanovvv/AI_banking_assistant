@@ -234,15 +234,10 @@ class YandexGPTService:
     async def generate_responses(self, subject: str, body: str, analysis: Dict[str, Any]) -> Dict[str, str]:
         """Генерация 4 вариантов ответа на основе нового системного промпта"""
         
-        # Проверка: если это уведомление, не генерируем ответы
+        # Проверка: если это уведомление, не генерируем ответы (ответ не требуется)
         classification = analysis.get("classification", {})
         if classification.get("type") == "notification":
-            return {
-                "strict_official": "Уведомление принято к сведению. Ответ не требуется.",
-                "corporate": "Благодарим за информацию. Принято к сведению.",
-                "client_oriented": "Спасибо, что уведомили нас. Информация принята.",
-                "brief_info": "Принято к сведению."
-            }
+            return None  # Не генерируем варианты ответов для уведомлений
         
         # Полный системный промпт из Version 2 с базой знаний
         knowledge_base_text = self._format_knowledge_base()

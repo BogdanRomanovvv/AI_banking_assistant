@@ -3,11 +3,28 @@ from app.models import Letter, LetterStatus
 from app.schemas import LetterCreate, LetterUpdate
 from app.services.yandex_gpt import yandex_gpt_service
 from app.services.email_sender import send_email
+from app.services.priority_service import _calc_priority
 from datetime import datetime, timedelta
 from typing import List, Optional
 
 
 class LetterService:
+    
+    @staticmethod
+    def run_analysis_sync(db: Session, letter_id: int):
+        """Синхронный запуск асинхронного анализа для BackgroundTasks"""
+        import asyncio
+        try:
+            # Создаем новый event loop для фоновой задачи
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(LetterService.analyze_letter(db, letter_id))
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Ошибка при анализе письма {letter_id}: {e}")
+        finally:
+            loop.close()
     
     @staticmethod
     def create_letter(db: Session, letter_data: LetterCreate) -> Letter:
@@ -31,48 +48,64 @@ class LetterService:
         if not letter:
             raise ValueError("Letter not found")
         
-        # Обновляем статус
-        letter.status = LetterStatus.ANALYZING
-        db.commit()
-        
-        # Анализ через GPT
-        analysis = await yandex_gpt_service.analyze_letter(letter.subject, letter.body)
-        
-        # Сохранение результатов анализа
-        letter.classification_data = analysis.get("classification")
-        letter.letter_type = analysis.get("classification", {}).get("type", "other")
-        letter.formality_level = analysis.get("formality_level", "neutral")
-        # SLA может вернуться None из анализа — подставляем безопасное значение
-        sla = analysis.get("sla_hours", 24)
         try:
-            letter.sla_hours = int(sla) if sla is not None else 24
-        except (ValueError, TypeError):
-            letter.sla_hours = 24
-        letter.priority = analysis.get("priority", 2)
-        letter.required_departments = analysis.get("required_departments", [])
-        letter.extracted_entities = analysis.get("extracted_entities")
-        letter.risks = analysis.get("risks", [])
-        letter.approval_route = analysis.get("approval_route", [])
+            # НЕ меняем статус на ANALYZING при автоматическом анализе
+            # Письмо остается в NEW и сразу попадает во входящие
+            
+            # Анализ через GPT
+            analysis = await yandex_gpt_service.analyze_letter(letter.subject, letter.body)
+            
+            # Сохранение результатов анализа
+            letter.classification_data = analysis.get("classification")
+            letter.letter_type = analysis.get("classification", {}).get("type", "other")
+            letter.formality_level = analysis.get("formality_level", "neutral")
+            # SLA может вернуться None из анализа — подставляем безопасное значение
+            sla = analysis.get("sla_hours", 24)
+            try:
+                letter.sla_hours = int(sla) if sla is not None else 24
+            except (ValueError, TypeError):
+                letter.sla_hours = 24
+            
+            # Рассчитываем дедлайн
+            # Защита от None/нечислового значения
+            safe_sla = letter.sla_hours if isinstance(letter.sla_hours, int) else 24
+            letter.deadline = datetime.now() + timedelta(hours=safe_sla)
+            
+            # Рассчитываем приоритет на основе дедлайна (игнорируем приоритет от GPT)
+            letter.priority = _calc_priority(letter)
+            
+            letter.required_departments = analysis.get("required_departments", [])
+            letter.extracted_entities = analysis.get("extracted_entities")
+            letter.risks = analysis.get("risks", [])
+            letter.approval_route = analysis.get("approval_route", [])
+            
+            # Генерация вариантов ответов
+            draft_responses = await yandex_gpt_service.generate_responses(
+                letter.subject, 
+                letter.body, 
+                analysis
+            )
+            letter.draft_responses = draft_responses
+            
+            # После анализа письмо всегда остается в статусе NEW (входящие)
+            # Сотрудник вручную решает, что с ним делать:
+            # - перенести в обработку (IN_PROGRESS)
+            # - отправить на согласование (если есть approval_route)
+            # - отправить напрямую (если согласование не требуется)
+            letter.status = LetterStatus.NEW
+            
+            db.commit()
+            db.refresh(letter)
+            return letter
         
-        # Рассчитываем дедлайн
-        # Защита от None/нечислового значения
-        safe_sla = letter.sla_hours if isinstance(letter.sla_hours, int) else 24
-        letter.deadline = datetime.now() + timedelta(hours=safe_sla)
-        
-        # Генерация вариантов ответов
-        draft_responses = await yandex_gpt_service.generate_responses(
-            letter.subject, 
-            letter.body, 
-            analysis
-        )
-        letter.draft_responses = draft_responses
-        
-        # Устанавливаем статус
-        letter.status = LetterStatus.DRAFT_READY
-        
-        db.commit()
-        db.refresh(letter)
-        return letter
+        except Exception as e:
+            # При ошибке возвращаем письмо в статус NEW
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Ошибка анализа письма {letter_id}: {e}")
+            letter.status = LetterStatus.NEW
+            db.commit()
+            raise
     
     @staticmethod
     def get_letter(db: Session, letter_id: int) -> Optional[Letter]:

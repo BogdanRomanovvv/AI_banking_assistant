@@ -24,6 +24,7 @@ class LetterType(str, enum.Enum):
 class LetterStatus(str, enum.Enum):
     NEW = "new"
     ANALYZING = "analyzing"
+    IN_PROGRESS = "in_progress"
     DRAFT_READY = "draft_ready"
     IN_APPROVAL = "in_approval"
     APPROVED = "approved"

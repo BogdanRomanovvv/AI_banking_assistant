@@ -63,6 +63,7 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        use_enum_values = True  # Сериализация enum как строк
 
 
 # Letter schemas
@@ -77,6 +78,7 @@ class LetterUpdate(BaseModel):
     status: Optional[LetterStatus] = None
     selected_response: Optional[str] = None
     current_approver: Optional[str] = None
+    deadline: Optional[datetime] = None  # Добавляем возможность изменить дедлайн
 
 
 class LetterResponse(BaseModel):
@@ -106,6 +108,7 @@ class LetterResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        use_enum_values = True  # Сериализация enum как строк
 
 
 class AnalysisResponse(BaseModel):

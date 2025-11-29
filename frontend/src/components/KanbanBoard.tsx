@@ -9,7 +9,7 @@ interface KanbanBoardProps {
 
 const statusColumns = [
     { status: LetterStatus.NEW, title: 'Входящие' },
-    { status: LetterStatus.ANALYZING, title: 'В обработке' },
+    { status: LetterStatus.IN_PROGRESS, title: 'В обработке' },
     { status: LetterStatus.DRAFT_READY, title: 'Черновик готов' },
     { status: LetterStatus.IN_APPROVAL, title: 'На согласовании' },
     { status: LetterStatus.APPROVED, title: 'Согласовано' },
@@ -36,9 +36,32 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     onSelectLetter,
     onStatusChange
 }) => {
-    const canMove = (from: LetterStatus, to: LetterStatus) => {
-        // Разрешаем только перенос из Входящих в В обработке
-        return from === LetterStatus.NEW && to === LetterStatus.ANALYZING;
+    const canMove = (letter: Letter, from: LetterStatus, to: LetterStatus) => {
+        // Отладка
+        console.log('canMove check:', {
+            letterId: letter.id,
+            letterType: letter.letter_type,
+            from: from,
+            to: to,
+            isNotification: letter.letter_type?.toLowerCase() === 'notification'
+        });
+
+        // Для уведомлений разрешаем перемещение между NEW, IN_PROGRESS и APPROVED (для закрытия)
+        if (letter.letter_type?.toLowerCase() === 'notification') {
+            const canMoveNotification =
+                (from === 'new' && to === 'in_progress') ||
+                (from === 'in_progress' && to === 'new') ||
+                (from === 'in_progress' && to === 'approved') ||
+                (from === 'new' && to === 'approved');
+            console.log('Notification can move:', canMoveNotification);
+            return canMoveNotification;
+        }
+
+        // Для остальных писем - только перенос из Входящих в В обработке
+        const canMoveRegular = from === 'new' && to === 'in_progress';
+        console.log('Regular letter can move:', canMoveRegular);
+        return canMoveRegular;
+        return canMoveRegular;
     };
 
     const getLettersByStatus = (status: LetterStatus) => {
@@ -60,7 +83,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         const letterId = parseInt(e.dataTransfer.getData('letterId'));
         if (letterId) {
             const letter = letters.find(l => l.id === letterId);
-            if (letter && canMove(letter.status, newStatus)) {
+            if (letter && canMove(letter, letter.status, newStatus)) {
                 onStatusChange(letterId, newStatus);
             }
         }
@@ -96,7 +119,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                         <div
                                             key={letter.id}
                                             className="letter-card"
-                                            draggable={letter.status === LetterStatus.NEW}
+                                            draggable={
+                                                letter.letter_type?.toLowerCase() === 'notification'
+                                                    ? (letter.status === 'new' || letter.status === 'in_progress')
+                                                    : letter.status === 'new'
+                                            }
                                             onDragStart={(e) => handleDragStart(e, letter)}
                                             onClick={() => onSelectLetter(letter)}
                                         >

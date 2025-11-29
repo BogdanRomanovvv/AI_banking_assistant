@@ -2,6 +2,7 @@ import email
 import logging
 import re
 import asyncio
+import ssl
 from email.header import decode_header
 from typing import List, Optional
 from datetime import datetime
@@ -31,10 +32,16 @@ class YandexMailService:
                 logger.warning("⚠️ Настройки почты не заданы")
                 return False
             
+            # Создаем SSL контекст с поддержкой современных протоколов
+            ssl_context = ssl.create_default_context()
+            # Разрешаем TLS 1.2 и выше
+            ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
+            
             self.client = IMAPClient(
                 host=settings.yandex_mail_imap_server,
                 port=settings.yandex_mail_imap_port,
                 ssl=True,
+                ssl_context=ssl_context,
                 timeout=30
             )
             
@@ -137,13 +144,14 @@ class YandexMailService:
                 return []
         
         try:
-            self.client.select_folder(mailbox)
+            folder_status = self.client.select_folder(mailbox)
+            logger.info(f"📬 Папка {mailbox}: всего писем {folder_status.get(b'EXISTS', 0)}, непрочитанных {folder_status.get(b'UNSEEN', 0)}")
             
             # Ищем непрочитанные письма
             messages = self.client.search(['UNSEEN'])
             
             if not messages:
-                logger.info("Новых писем нет")
+                logger.info("Новых непрочитанных писем нет")
                 return []
             
             logger.info(f"📧 Найдено новых писем: {len(messages)}")
@@ -199,6 +207,18 @@ class YandexMailService:
                     
                     created_letters.append(letter)
                     logger.info(f"✅ Создано письмо #{letter.id}: {subject[:50]}...")
+                    
+                    # Запускаем автоматический анализ письма
+                    try:
+                        from app.services.letter_service import LetterService
+                        import asyncio
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        loop.run_until_complete(LetterService.analyze_letter(db, letter.id))
+                        loop.close()
+                        logger.info(f"✅ Письмо #{letter.id} проанализировано автоматически")
+                    except Exception as analyze_error:
+                        logger.error(f"❌ Ошибка автоматического анализа письма #{letter.id}: {analyze_error}")
 
                     # Помечаем письмо как прочитанное в почтовом ящике
                     try:

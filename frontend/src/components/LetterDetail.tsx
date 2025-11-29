@@ -41,6 +41,8 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
     const [editedResponse, setEditedResponse] = useState(letter.selected_response || '');
     const [approvalComment, setApprovalComment] = useState('');
     const [activeTab, setActiveTab] = useState<string>('strict_official');
+    const [editingDeadline, setEditingDeadline] = useState(false);
+    const [editedDeadline, setEditedDeadline] = useState('');
 
     // Проверка прав доступа
     const canAnalyze = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.OPERATOR;
@@ -112,8 +114,69 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
                     {letter.deadline && (
                         <div className="detail-row">
                             <div className="detail-label">Дедлайн:</div>
-                            <div className="detail-value" style={{ color: 'var(--danger)', fontWeight: 600 }}>
-                                {format(new Date(letter.deadline), 'dd MMMM yyyy, HH:mm', { locale: ru })}
+                            <div className="detail-value" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                {!editingDeadline ? (
+                                    <>
+                                        <span style={{ color: 'var(--danger)', fontWeight: 600 }}>
+                                            {format(new Date(letter.deadline), 'dd MMMM yyyy, HH:mm', { locale: ru })}
+                                        </span>
+                                        {canEdit && (
+                                            <button
+                                                className="btn btn-secondary"
+                                                style={{ padding: '4px 12px', fontSize: '12px' }}
+                                                onClick={() => {
+                                                    const deadlineDate = new Date(letter.deadline!);
+                                                    const localDatetime = new Date(deadlineDate.getTime() - deadlineDate.getTimezoneOffset() * 60000)
+                                                        .toISOString()
+                                                        .slice(0, 16);
+                                                    setEditedDeadline(localDatetime);
+                                                    setEditingDeadline(true);
+                                                }}
+                                            >
+                                                Изменить
+                                            </button>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <input
+                                            type="datetime-local"
+                                            value={editedDeadline}
+                                            onChange={(e) => setEditedDeadline(e.target.value)}
+                                            style={{ padding: '4px 8px', fontSize: '14px' }}
+                                        />
+                                        <button
+                                            className="btn btn-primary"
+                                            style={{ padding: '4px 12px', fontSize: '12px' }}
+                                            onClick={async () => {
+                                                try {
+                                                    const newDeadline = new Date(editedDeadline).toISOString();
+                                                    await fetch(`/api/letters/${letter.id}`, {
+                                                        method: 'PATCH',
+                                                        headers: {
+                                                            'Content-Type': 'application/json',
+                                                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                                                        },
+                                                        body: JSON.stringify({ deadline: newDeadline })
+                                                    });
+                                                    setEditingDeadline(false);
+                                                    window.location.reload();
+                                                } catch (error) {
+                                                    console.error('Ошибка обновления дедлайна:', error);
+                                                }
+                                            }}
+                                        >
+                                            Сохранить
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary"
+                                            style={{ padding: '4px 12px', fontSize: '12px' }}
+                                            onClick={() => setEditingDeadline(false)}
+                                        >
+                                            Отмена
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}
@@ -302,7 +365,7 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
                                     Редактировать
                                 </button>
                             )}
-                            {canEdit && letter.status === LetterStatus.DRAFT_READY && (
+                            {canEdit && letter.status === LetterStatus.IN_PROGRESS && (
                                 <button
                                     className="btn btn-success"
                                     style={{ marginLeft: '10px' }}

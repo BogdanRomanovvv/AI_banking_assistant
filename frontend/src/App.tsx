@@ -49,19 +49,43 @@ function App() {
 
     useEffect(() => {
         if (isAuthenticated && currentView === 'kanban') {
-            loadLetters();
-            // Обновление каждые 30 секунд
-            const interval = setInterval(loadLetters, 30000);
+            loadLetters(true); // Первая загрузка с loading indicator
+            // Обновление каждые 10 секунд (без loading indicator)
+            const interval = setInterval(() => loadLetters(false), 10000);
             return () => clearInterval(interval);
         }
     }, [currentView, isAuthenticated]);
 
-    const loadLetters = async () => {
+    const loadLetters = async (showLoading = true) => {
         try {
-            setLoading(true);
+            if (showLoading) {
+                setLoading(true);
+            }
             setError(null);
             const data = await letterService.getLetters();
-            setLetters(data);
+
+            // Умное обновление: обновляем только если есть реальные изменения
+            setLetters(prevLetters => {
+                // Если количество писем изменилось - обновляем
+                if (prevLetters.length !== data.length) {
+                    return data;
+                }
+
+                // Проверяем, изменились ли письма
+                const hasChanges = data.some(newLetter => {
+                    const oldLetter = prevLetters.find(l => l.id === newLetter.id);
+                    if (!oldLetter) return true;
+
+                    // Сравниваем критичные поля
+                    return oldLetter.status !== newLetter.status ||
+                        oldLetter.updated_at !== newLetter.updated_at ||
+                        (oldLetter.selected_response || '') !== (newLetter.selected_response || '') ||
+                        (oldLetter.current_approver || '') !== (newLetter.current_approver || '');
+                });
+
+                // Обновляем только если есть изменения
+                return hasChanges ? data : prevLetters;
+            });
 
             // Если открыто модальное окно, обновляем и выбранное письмо
             if (selectedLetter) {
@@ -74,7 +98,9 @@ function App() {
             setError('Ошибка загрузки писем');
             console.error(err);
         } finally {
-            setLoading(false);
+            if (showLoading) {
+                setLoading(false);
+            }
         }
     };
 

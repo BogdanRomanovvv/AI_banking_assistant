@@ -11,6 +11,7 @@ export enum LetterType {
 export enum LetterStatus {
     NEW = 'new',
     ANALYZING = 'analyzing',
+    IN_PROGRESS = 'in_progress',
     DRAFT_READY = 'draft_ready',
     IN_APPROVAL = 'in_approval',
     APPROVED = 'approved',
