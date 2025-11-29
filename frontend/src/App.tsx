@@ -107,21 +107,6 @@ function App() {
 
     // Создание новых писем из UI отключено
 
-    const handleAnalyzeLetter = async (id: number) => {
-        try {
-            setLoading(true);
-            setError(null);
-            const updated = await letterService.analyzeLetter(id);
-            setLetters(letters.map(l => l.id === id ? updated : l));
-            setSelectedLetter(updated);
-        } catch (err) {
-            setError('Ошибка анализа');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleUpdateResponse = async (id: number, response: string) => {
         try {
             setLoading(true);
@@ -158,7 +143,16 @@ function App() {
             setError(null);
             const updated = await letterService.addApprovalComment(id, { department, comment, approved });
             setLetters(letters.map(l => l.id === id ? updated : l));
-            setSelectedLetter(updated);
+
+            // Закрываем модальное окно после успешного согласования/отклонения
+            // чтобы доска обновилась
+            setShowDetail(false);
+            setSelectedLetter(null);
+
+            // Принудительно загружаем письма через небольшую задержку
+            setTimeout(() => {
+                loadLetters(false);
+            }, 500);
         } catch (err) {
             setError('Ошибка согласования');
             console.error(err);
@@ -208,39 +202,22 @@ function App() {
 
     return (
         <div className="app">
-            <header className="header">
-                <div className="header-content">
-                    <h1>Banking AI Assistant</h1>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                        <span style={{ marginRight: '20px', color: '#fff' }}>
-                            {currentUser?.first_name} {currentUser?.last_name} ({getRoleName(currentUser?.role || '')})
-                        </span>
+            <header className="app-header">
+                <div className="header-left">
+                    <div className="app-logo">
+                        Banking AI Assistant
+                    </div>
+                    <nav style={{ display: 'flex', gap: '8px' }}>
                         <button
                             onClick={() => setCurrentView('kanban')}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: currentView === 'kanban' ? '#1976d2' : '#fff',
-                                color: currentView === 'kanban' ? '#fff' : '#333',
-                                border: '1px solid #1976d2',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontWeight: currentView === 'kanban' ? 'bold' : 'normal'
-                            }}
+                            className={currentView === 'kanban' ? 'btn btn-primary' : 'btn btn-ghost'}
                         >
                             Письма
                         </button>
                         {(currentUser?.role === 'admin' || currentUser?.role === 'operator') && (
                             <button
                                 onClick={() => setCurrentView('analytics')}
-                                style={{
-                                    padding: '8px 16px',
-                                    backgroundColor: currentView === 'analytics' ? '#1976d2' : '#fff',
-                                    color: currentView === 'analytics' ? '#fff' : '#333',
-                                    border: '1px solid #1976d2',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontWeight: currentView === 'analytics' ? 'bold' : 'normal'
-                                }}
+                                className={currentView === 'analytics' ? 'btn btn-primary' : 'btn btn-ghost'}
                             >
                                 Аналитика
                             </button>
@@ -248,41 +225,58 @@ function App() {
                         {currentUser?.role === 'admin' && (
                             <button
                                 onClick={() => setCurrentView('users')}
-                                style={{
-                                    padding: '8px 16px',
-                                    backgroundColor: currentView === 'users' ? '#1976d2' : '#fff',
-                                    color: currentView === 'users' ? '#fff' : '#333',
-                                    border: '1px solid #1976d2',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontWeight: currentView === 'users' ? 'bold' : 'normal'
-                                }}
+                                className={currentView === 'users' ? 'btn btn-primary' : 'btn btn-ghost'}
                             >
                                 Пользователи
                             </button>
                         )}
-                        <button
-                            onClick={handleLogout}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: '#d32f2f',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontWeight: 'bold'
-                            }}
-                        >
-                            Выйти
-                        </button>
+                    </nav>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
+                            {currentUser?.first_name} {currentUser?.last_name}
+                        </div>
+                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                            {getRoleName(currentUser?.role || '')}
+                        </div>
                     </div>
+                    <button
+                        onClick={handleLogout}
+                        className="btn btn-outline btn-sm"
+                        style={{ color: 'var(--danger)' }}
+                        title="Выйти из системы"
+                    >
+                        Выйти
+                    </button>
                 </div>
             </header>
 
-            <div className="container">
-                {error && <div className="error">{error}</div>}
+            <div className="container" style={{ padding: 0 }}>
+                {error && (
+                    <div style={{
+                        margin: '24px',
+                        padding: '16px 20px',
+                        backgroundColor: 'var(--danger-light)',
+                        color: 'var(--danger)',
+                        borderRadius: 'var(--radius-lg)',
+                        border: '1px solid var(--danger)',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                    }}>
+                        <span style={{ fontSize: '20px' }}>⚠️</span>
+                        {error}
+                    </div>
+                )}
 
-                {loading && currentView === 'kanban' && <div className="loading">Загрузка...</div>}
+                {loading && currentView === 'kanban' && (
+                    <div className="loading">
+                        <div className="spinner"></div>
+                        <span style={{ fontSize: '15px', color: 'var(--text-secondary)' }}>Загрузка писем...</span>
+                    </div>
+                )}
 
                 {currentView === 'kanban' ? (
                     // Для юристов и маркетологов показываем специальную доску с 2 колонками
@@ -310,15 +304,23 @@ function App() {
             {showDetail && selectedLetter && currentView === 'kanban' && (
                 <div className="modal-overlay" onClick={handleCloseModal}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="modal-close" onClick={handleCloseModal}>×</button>
-                        <LetterDetail
-                            letter={selectedLetter}
-                            currentUser={currentUser!}
-                            onAnalyze={handleAnalyzeLetter}
-                            onUpdateResponse={handleUpdateResponse}
-                            onStartApproval={handleStartApproval}
-                            onApprovalAction={handleApprovalAction}
-                        />
+                        <div className="modal-header">
+                            <h2 className="modal-title">
+                                Письмо #{selectedLetter.id}
+                            </h2>
+                            <button className="modal-close" onClick={handleCloseModal} title="Закрыть">
+                                ×
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <LetterDetail
+                                letter={selectedLetter}
+                                currentUser={currentUser!}
+                                onUpdateResponse={handleUpdateResponse}
+                                onStartApproval={handleStartApproval}
+                                onApprovalAction={handleApprovalAction}
+                            />
+                        </div>
                     </div>
                 </div>
             )}

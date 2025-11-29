@@ -20,9 +20,21 @@ export const ApproverKanbanBoard: React.FC<ApproverKanbanBoardProps> = ({
 
     useEffect(() => {
         loadLetters();
-        const interval = setInterval(loadLetters, 30000);
+        // Уменьшаем интервал до 5 секунд для более быстрого обновления
+        const interval = setInterval(loadLetters, 5000);
         return () => clearInterval(interval);
     }, []);
+
+    // Обновляем списки при закрытии модального окна (когда selectedLetterId становится undefined)
+    useEffect(() => {
+        if (selectedLetterId === undefined) {
+            // Небольшая задержка, чтобы backend успел обработать изменения
+            const timer = setTimeout(() => {
+                loadLetters();
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [selectedLetterId]);
 
     const loadLetters = async () => {
         try {
@@ -157,7 +169,7 @@ export const ApproverKanbanBoard: React.FC<ApproverKanbanBoardProps> = ({
                 onDrop={(e) => handleDrop(e, 'incoming')}
             >
                 <h3 style={{ marginTop: 0, marginBottom: '16px' }}>
-                    📥 Входящие на согласование ({incomingLetters.length})
+                    Входящие на согласование ({incomingLetters.length})
                 </h3>
                 <div style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
                     Перетащите письмо в "В процессе", чтобы взять его в работу

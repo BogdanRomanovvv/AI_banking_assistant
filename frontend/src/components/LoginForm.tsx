@@ -45,71 +45,99 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
             justifyContent: 'center',
             alignItems: 'center',
             minHeight: '100vh',
-            backgroundColor: '#f5f5f5'
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            padding: '24px'
         }}>
             <div style={{
-                backgroundColor: 'white',
-                padding: '40px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                backgroundColor: 'var(--bg-card)',
+                padding: '48px',
+                borderRadius: 'var(--radius-xl)',
+                boxShadow: 'var(--shadow-xl)',
                 width: '100%',
-                maxWidth: '400px'
+                maxWidth: '480px',
+                animation: 'slideUp 0.4s ease-out'
             }}>
-                <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#1976d2' }}>
-                    Banking AI Assistant
-                </h1>
+                <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                    <div style={{
+                        width: '80px',
+                        height: '80px',
+                        background: 'linear-gradient(135deg, var(--primary) 0%, #1D4ED8 100%)',
+                        borderRadius: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 20px',
+                        boxShadow: 'var(--shadow-lg)',
+                        fontSize: '40px'
+                    }}>
+                        BA
+                    </div>
+                    <h1 style={{
+                        fontSize: '28px',
+                        fontWeight: '700',
+                        color: 'var(--text-primary)',
+                        marginBottom: '8px',
+                        letterSpacing: '-0.02em'
+                    }}>
+                        Banking AI Assistant
+                    </h1>
+                    <p style={{
+                        color: 'var(--text-secondary)',
+                        fontSize: '15px'
+                    }}>
+                        Интеллектуальная система обработки корреспонденции
+                    </p>
+                </div>
 
                 <form onSubmit={handleSubmit}>
-                    <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="username">
                             Имя пользователя
                         </label>
                         <input
                             type="text"
+                            id="username"
                             name="username"
+                            className="form-input"
                             value={credentials.username}
                             onChange={handleInputChange}
                             required
                             autoFocus
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                borderRadius: '4px',
-                                border: '1px solid #ccc',
-                                fontSize: '16px'
-                            }}
+                            placeholder="Введите имя пользователя"
                         />
                     </div>
 
-                    <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="password">
                             Пароль
                         </label>
                         <input
                             type="password"
+                            id="password"
                             name="password"
+                            className="form-input"
                             value={credentials.password}
                             onChange={handleInputChange}
                             required
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                borderRadius: '4px',
-                                border: '1px solid #ccc',
-                                fontSize: '16px'
-                            }}
+                            placeholder="Введите пароль"
                         />
                     </div>
 
                     {error && (
                         <div style={{
-                            padding: '12px',
-                            backgroundColor: '#ffebee',
-                            color: '#c62828',
-                            borderRadius: '4px',
-                            marginBottom: '20px',
-                            textAlign: 'center'
+                            padding: '16px',
+                            backgroundColor: 'var(--danger-light)',
+                            color: 'var(--danger)',
+                            borderRadius: 'var(--radius-lg)',
+                            marginBottom: '24px',
+                            border: '1px solid var(--danger)',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
                         }}>
+                            <span>⚠️</span>
                             {error}
                         </div>
                     )}
@@ -117,42 +145,54 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
                     <button
                         type="submit"
                         disabled={loading}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            backgroundColor: loading ? '#ccc' : '#1976d2',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            fontWeight: 'bold',
-                            fontSize: '16px'
-                        }}
+                        className="btn btn-primary btn-lg"
+                        style={{ width: '100%' }}
                     >
-                        {loading ? 'Вход...' : 'Войти'}
+                        {loading ? (
+                            <>
+                                <span className="spinner" style={{ width: '20px', height: '20px', borderWidth: '2px' }}></span>
+                                Вход...
+                            </>
+                        ) : (
+                            'Войти в систему'
+                        )}
                     </button>
                 </form>
 
                 <div style={{
-                    marginTop: '30px',
-                    padding: '15px',
-                    backgroundColor: '#e3f2fd',
-                    borderRadius: '4px',
-                    fontSize: '14px'
+                    marginTop: '32px',
+                    padding: '20px',
+                    backgroundColor: 'var(--primary-light)',
+                    borderRadius: 'var(--radius-lg)',
+                    border: '1px solid var(--border)',
+                    fontSize: '13px'
                 }}>
-                    <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>Тестовые аккаунты:</p>
-                    <p style={{ margin: '5px 0' }}>
-                        <strong>Администратор:</strong> admin / admin123
+                    <p style={{
+                        margin: '0 0 16px 0',
+                        fontWeight: '600',
+                        color: 'var(--text-primary)',
+                        fontSize: '14px'
+                    }}>
+                        Тестовые аккаунты:
                     </p>
-                    <p style={{ margin: '5px 0' }}>
-                        <strong>Оператор:</strong> operator / operator123
-                    </p>
-                    <p style={{ margin: '5px 0' }}>
-                        <strong>Юрист:</strong> lawyer / lawyer123
-                    </p>
-                    <p style={{ margin: '5px 0' }}>
-                        <strong>Маркетолог:</strong> marketing / marketing123
-                    </p>
+                    <div style={{ display: 'grid', gap: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                            <span><strong>Администратор:</strong></span>
+                            <code style={{ padding: '2px 8px', background: 'white', borderRadius: '4px' }}>admin / admin123</code>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                            <span><strong>Оператор:</strong></span>
+                            <code style={{ padding: '2px 8px', background: 'white', borderRadius: '4px' }}>operator / operator123</code>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                            <span><strong>Юрист:</strong></span>
+                            <code style={{ padding: '2px 8px', background: 'white', borderRadius: '4px' }}>lawyer / lawyer123</code>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                            <span><strong>Маркетолог:</strong></span>
+                            <code style={{ padding: '2px 8px', background: 'white', borderRadius: '4px' }}>marketing / marketing123</code>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

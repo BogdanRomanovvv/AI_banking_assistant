@@ -6,7 +6,6 @@ import { ru } from 'date-fns/locale';
 interface LetterDetailProps {
     letter: Letter;
     currentUser: User;
-    onAnalyze: (id: number) => void;
     onUpdateResponse: (id: number, response: string) => void;
     onStartApproval: (id: number) => void;
     onApprovalAction: (id: number, department: string, comment: string, approved: boolean) => void;
@@ -32,7 +31,6 @@ const responseTypeLabels: Record<string, string> = {
 export const LetterDetail: React.FC<LetterDetailProps> = ({
     letter,
     currentUser,
-    onAnalyze,
     onUpdateResponse,
     onStartApproval,
     onApprovalAction
@@ -45,7 +43,6 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
     const [editedDeadline, setEditedDeadline] = useState('');
 
     // Проверка прав доступа
-    const canAnalyze = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.OPERATOR;
     const canEdit = currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.OPERATOR;
     const canApprove = currentUser.role === UserRole.ADMIN ||
         currentUser.role === UserRole.LAWYER ||
@@ -84,14 +81,6 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
 
     return (
         <div>
-            {canAnalyze && (letter.status === LetterStatus.NEW || letter.status === LetterStatus.ANALYZING) && (
-                <div className="mb-16">
-                    <button className="btn btn-primary" onClick={() => onAnalyze(letter.id)}>
-                        Анализировать письмо
-                    </button>
-                </div>
-            )}
-
             <div className="detail-section">
                 <h3 className="detail-section-title">Информация об отправителе</h3>
                 <div className="detail-content">
@@ -365,13 +354,16 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
                                     Редактировать
                                 </button>
                             )}
-                            {canEdit && letter.status === LetterStatus.IN_PROGRESS && (
+                            {canEdit && (letter.status === LetterStatus.IN_PROGRESS || letter.status === LetterStatus.DRAFT_READY) && (
                                 <button
                                     className="btn btn-success"
                                     style={{ marginLeft: '10px' }}
                                     onClick={() => onStartApproval(letter.id)}
                                 >
-                                    Отправить на согласование
+                                    {letter.approval_route && letter.approval_route.length > 0
+                                        ? (letter.status === LetterStatus.DRAFT_READY ? 'Повторно отправить на согласование' : 'Отправить на согласование')
+                                        : 'Отправить письмо'
+                                    }
                                 </button>
                             )}
                         </div>
@@ -379,41 +371,49 @@ export const LetterDetail: React.FC<LetterDetailProps> = ({
                 </div>
             )}
 
-            {letter.approval_route && letter.approval_route.length > 0 && (
+            {(letter.status === LetterStatus.IN_PROGRESS || letter.status === LetterStatus.DRAFT_READY || letter.status === LetterStatus.IN_APPROVAL || letter.status === LetterStatus.APPROVED) && (
                 <div className="detail-section">
                     <h3 className="detail-section-title">Маршрут согласования</h3>
-                    {letter.approval_route.map((route, idx) => {
-                        const isActive = letter.current_approver &&
-                            route.department.toLowerCase() === letter.current_approver.toLowerCase();
-                        const isCompleted = letter.approval_comments?.some(
-                            c => c.department.toLowerCase() === route.department.toLowerCase() && c.approved
-                        );
+                    {(!letter.approval_route || letter.approval_route.length === 0) ? (
+                        <div className="detail-content" style={{ padding: '16px', backgroundColor: 'var(--bg-secondary)', borderRadius: '8px' }}>
+                            <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Маршрут согласования не нужен. Письмо можно отправить сразу после редактирования.</p>
+                        </div>
+                    ) : (
+                        <>
+                            {letter.approval_route.map((route, idx) => {
+                                const isActive = letter.current_approver &&
+                                    route.department.toLowerCase() === letter.current_approver.toLowerCase();
+                                const isCompleted = letter.approval_comments?.some(
+                                    c => c.department.toLowerCase() === route.department.toLowerCase() && c.approved
+                                );
 
-                        return (
-                            <div
-                                key={idx}
-                                className={`approval-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
-                            >
-                                <div className="approval-icon">
-                                    {isCompleted ? '✓' : idx + 1}
-                                </div>
-                                <div className="approval-info">
-                                    <div className="approval-department">
-                                        {route.department}
-                                        {isActive && ' • Текущий этап'}
+                                return (
+                                    <div
+                                        key={idx}
+                                        className={`approval-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
+                                    >
+                                        <div className="approval-icon">
+                                            {isCompleted ? '✓' : idx + 1}
+                                        </div>
+                                        <div className="approval-info">
+                                            <div className="approval-department">
+                                                {route.department}
+                                                {isActive && ' • Текущий этап'}
+                                            </div>
+                                            <div className="approval-reason">{route.reason}</div>
+                                            {route.check_points && route.check_points.length > 0 && (
+                                                <ul className="approval-checkpoints">
+                                                    {route.check_points.map((point, pidx) => (
+                                                        <li key={pidx}>{point}</li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="approval-reason">{route.reason}</div>
-                                    {route.check_points && route.check_points.length > 0 && (
-                                        <ul className="approval-checkpoints">
-                                            {route.check_points.map((point, pidx) => (
-                                                <li key={pidx}>{point}</li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
+                                );
+                            })}
+                        </>
+                    )}
                 </div>
             )}
 

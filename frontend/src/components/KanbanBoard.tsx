@@ -76,10 +76,21 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
+        // Добавляем класс для визуального feedback
+        const column = e.currentTarget as HTMLElement;
+        column.classList.add('drag-over');
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        const column = e.currentTarget as HTMLElement;
+        column.classList.remove('drag-over');
     };
 
     const handleDrop = (e: React.DragEvent, newStatus: LetterStatus) => {
         e.preventDefault();
+        const column = e.currentTarget as HTMLElement;
+        column.classList.remove('drag-over');
+
         const letterId = parseInt(e.dataTransfer.getData('letterId'));
         if (letterId) {
             const letter = letters.find(l => l.id === letterId);
@@ -100,6 +111,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             key={column.status}
                             className="kanban-column"
                             onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
                             onDrop={(e) => handleDrop(e, column.status)}
                         >
                             <div className="column-header">
@@ -112,6 +124,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             <div className="column-content">
                                 {columnLetters.length === 0 ? (
                                     <div className="empty-state">
+                                        <div className="empty-state-icon">📭</div>
                                         <div className="empty-state-text">Нет писем</div>
                                     </div>
                                 ) : (
@@ -119,6 +132,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                         <div
                                             key={letter.id}
                                             className="letter-card"
+                                            data-priority={letter.priority}
                                             draggable={
                                                 letter.letter_type?.toLowerCase() === 'notification'
                                                     ? (letter.status === 'new' || letter.status === 'in_progress')

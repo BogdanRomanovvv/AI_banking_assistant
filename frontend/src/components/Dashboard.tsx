@@ -170,7 +170,7 @@ export const Dashboard: React.FC<DashboardProps> = () => {
                     </div>
                     <div className="metric-card">
                         <div className="metric-value">{summary.processing_rate}%</div>
-                        <div className="metric-label">Скорость обработки</div>
+                        <div className="metric-label">Процент завершения</div>
                     </div>
                     <div className="metric-card">
                         <div className="metric-value">{summary.average_sla_hours}ч</div>
@@ -187,19 +187,35 @@ export const Dashboard: React.FC<DashboardProps> = () => {
                         <div style={{ display: 'grid', gap: '12px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <span>Среднее время ответа:</span>
-                                <strong>{processingTime.average_response_time_hours.toFixed(1)} часов</strong>
+                                <strong>
+                                    {processingTime.average_response_time_hours >= 1
+                                        ? `${processingTime.average_response_time_hours.toFixed(1)} ч`
+                                        : `${Math.round(processingTime.average_response_time_hours * 60)} мин`}
+                                </strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <span>Медиана:</span>
-                                <strong>{processingTime.median_response_time_hours.toFixed(1)} часов</strong>
+                                <strong>
+                                    {processingTime.median_response_time_hours >= 1
+                                        ? `${processingTime.median_response_time_hours.toFixed(1)} ч`
+                                        : `${Math.round(processingTime.median_response_time_hours * 60)} мин`}
+                                </strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <span>Минимум:</span>
-                                <strong>{processingTime.min_response_time_hours.toFixed(1)} часов</strong>
+                                <strong>
+                                    {processingTime.min_response_time_hours >= 1
+                                        ? `${processingTime.min_response_time_hours.toFixed(1)} ч`
+                                        : `${Math.round(processingTime.min_response_time_hours * 60)} мин`}
+                                </strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <span>Максимум:</span>
-                                <strong>{processingTime.max_response_time_hours.toFixed(1)} часов</strong>
+                                <strong>
+                                    {processingTime.max_response_time_hours >= 1
+                                        ? `${processingTime.max_response_time_hours.toFixed(1)} ч`
+                                        : `${Math.round(processingTime.max_response_time_hours * 60)} мин`}
+                                </strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #eee', paddingTop: '12px' }}>
                                 <span>Обработано писем:</span>

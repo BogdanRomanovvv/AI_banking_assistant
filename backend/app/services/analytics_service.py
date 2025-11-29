@@ -15,11 +15,12 @@ class AnalyticsService:
             logger = getLogger("analytics")
             cutoff_date = datetime.now() - timedelta(days=days)
             try:
-                sent_letters = db.query(Letter).filter(
-                    Letter.status == LetterStatus.SENT,
+                # Считаем обработанными письма со статусами SENT и APPROVED
+                processed_letters = db.query(Letter).filter(
+                    Letter.status.in_([LetterStatus.SENT, LetterStatus.APPROVED]),
                     Letter.created_at >= cutoff_date
                 ).all()
-                if not sent_letters:
+                if not processed_letters:
                     return {
                         "average_response_time_hours": 0,
                         "median_response_time_hours": 0,
@@ -28,7 +29,7 @@ class AnalyticsService:
                         "total_processed": 0
                     }
                 processing_times = []
-                for letter in sent_letters:
+                for letter in processed_letters:
                     if letter.updated_at is not None and letter.created_at is not None:
                         try:
                             time_diff = (letter.updated_at - letter.created_at).total_seconds() / 3600
